@@ -2,6 +2,8 @@
 
 Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮기는 브라우저 기반 레이아웃 도구입니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
 
+상태: 구현과 로컬 검증, 비공개 GitHub push 완료. Cloudflare Pages는 사용자 로그인·GitHub App 연결 대기이며 아직 배포되지 않았습니다. [검증과 남은 단계](VERIFICATION.md)를 확인하세요.
+
 ## 기능
 
 - Figma 레이아웃 가이드에 익숙한 방식으로 columns, rows, margins, gutters를 px 단위로 조절합니다.

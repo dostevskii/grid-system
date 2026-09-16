@@ -27,4 +27,8 @@
 
 ## 배포
 
-비공개 GitHub 저장소 `dostevskii/grid-system`의 Private 상태를 확인했다. Cloudflare Pages의 Git 연결과 공개 배포 검증 결과는 완료 후 기록한다.
+비공개 GitHub 저장소 https://github.com/dostevskii/grid-system 의 Private 상태와 `main` push를 확인했다. 구현 커밋 `8813402`의 GitHub Actions 빌드·단위 테스트도 성공했다.
+
+Cloudflare Pages 생성 API는 `8000011`(Git installation 오류)을 반환했다. API로 프로젝트가 생성되지 않았음을 확인했으며 GitHub 설치 앱 목록에는 Cloudflare가 없다. Cloudflare 대시보드는 로그인 화면이므로 사용자 로그인·해당 저장소에 한정된 GitHub App 승인이 남았다. 공개 배포 URL은 아직 없으며 배포 성공으로 간주하지 않는다.
+
+로컬 미리보기 http://127.0.0.1:5173/ 를 브라우저에 열어 두었다. 배포 후에는 `GRID_SYSTEM_BASE_URL` 환경 변수를 공개 주소로 지정하여 브라우저 테스트를 실행할 수 있다.

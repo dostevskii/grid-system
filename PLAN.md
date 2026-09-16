@@ -1,7 +1,7 @@
 # Grid System 제작 계획
 
 작성일: 2026-09-16  
-상태: 2026-09-16 사용자가 전체 계획을 승인하여 구현을 진행했다. 애플리케이션과 로컬 Git, 비공개 GitHub 저장소를 생성했으며 브라우저 검증·Cloudflare Pages 배포를 진행 중이다. 실제 배포 및 최종 검증 결과는 README.md와 VERIFICATION.md에 기록한다.  
+상태: 2026-09-16 전체 계획 승인 후 구현·로컬 검증·비공개 GitHub push를 마쳤다. Cloudflare Pages는 Git 연동 오류와 브라우저 로그인 필요로 연결 대기 중이며 아직 공개 배포되지 않았다. 실제 검증 결과와 남은 절차는 README.md와 VERIFICATION.md에 기록한다.  
 이름: Grid System  
 프로젝트 위치: `C:\Users\JohnHB\Documents\Codex\2026-09-16\grid-system`
 
@@ -169,7 +169,7 @@ Node와 의존성 버전은 구현 때 호환성을 확인하고 프로젝트에
 
 GitHub 저장소는 비공개로 유지하고, 디자이너들이 사용할 앱은 공개 Pages 사이트로 배포하는 구성을 제안한다. 공개 앱에 포함한 샘플 텍스트와 폰트는 방문자의 브라우저에 전달된다. 제공된 책 PDF는 로컬 참고 자료로만 사용하고 소스 저장소나 배포 파일에 넣지 않는다.
 
-Cloudflare 로컬 인증 설정 파일의 존재만 확인했으며 유효한 로그인·계정·GitHub App 연결은 아직 검증하지 않았다. 구현을 마친 뒤 기존 연결을 우선 사용하고, 로그인이나 계정 선택이 실제로 필요할 때 해당 단계만 안내한다. GitHub App 설치가 필요하면 이 저장소에 필요한 접근 범위로 연결한다.
+Cloudflare API Token으로 계정의 Pages 목록을 읽을 수 있지만 Git-integrated 프로젝트 생성은 `8000011` Git installation 오류로 실패했다. GitHub 설치 앱 목록에 Cloudflare가 없으며 Cloudflare 대시보드는 로그아웃 상태다. 사용자 로그인과 `grid-system`에 한정된 GitHub App 연결 후 계속한다. 기존 앱 설치·다른 저장소 권한은 변경하지 않았고 Direct Upload 프로젝트로 임의 전환하지 않았다.
 
 ## 8. 구현 순서와 완료 기준
 
