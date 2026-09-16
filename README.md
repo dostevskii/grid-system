@@ -1,10 +1,14 @@
 # Grid System
 
-Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮기는 브라우저 기반 레이아웃 도구입니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
+그리드의 비율과 타이포그래피를 화면에서 조율하고, 실제 작업에 쓸 수 있는 레이아웃 설정으로 내보내는 브라우저 기반 도구입니다.
 
-상태: 구현·로컬 검증·비공개 GitHub push·Cloudflare Pages 배포 완료. [Grid System 열기](https://grid-system.pages.dev/) · [검증 기록](VERIFICATION.md).
+[grid-system.pages.dev — 바로 사용하기](https://grid-system.pages.dev/) · [검증 기록](VERIFICATION.md)
 
-## 기능
+![20분할 편집 화면](docs/screenshots/grid-system-desktop.png)
+
+Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮깁니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
+
+## 핵심 기능
 
 - Figma 레이아웃 가이드에 익숙한 방식으로 columns, rows, margins, gutters를 px 단위로 조절합니다.
 - 기본 20분할과 32분할 모드를 제공하며, 20분할을 기본값으로 사용합니다.
@@ -13,9 +17,39 @@ Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로
 - 제공받은 독일어 발췌문을 반복해 문단을 구성하고, 그리드의 모듈과 베이스라인에 맞춘 배치를 미리 봅니다.
 - Figma의 실제 Frame preset에서 확인한 Phone, Tablet, Desktop 규격을 제공하고, 기본 프레임은 Desktop 1440×1024입니다.
 - 12종 서체와 60개 작업판 프리셋을 검색하고 선택할 수 있습니다. ISO B와 JIS B, 국내 국절과 완성 판형을 구분합니다.
-- SVG, HTML/CSS ZIP, 설정 JSON을 내려받습니다. SVG는 편집 가능한 텍스트와 계산된 줄 위치를 담지만, 가져오는 앱에 같은 폰트가 없으면 글자 모양과 폭이 달라질 수 있습니다. Figma 네이티브 Layout Guide를 만드는 플러그인은 아닙니다.
 
-## 개발
+## 사용 흐름
+
+1. 작업판 프리셋을 고르거나 프레임 크기를 정합니다.
+2. 컬럼·행·여백·거터를 조절하며 계산된 그리드와 텍스트 배치를 확인합니다.
+3. 필요한 형식으로 내보내어 다른 디자인·개발 작업에 활용합니다.
+
+## 내보내기
+
+SVG, HTML/CSS ZIP, 설정 JSON을 내려받습니다. Figma 네이티브 Layout Guide를 만드는 플러그인은 아닙니다.
+
+| 형식 | 적합한 용도 | 유의할 점 |
+| --- | --- | --- |
+| SVG | 편집 가능한 텍스트와 계산된 줄 위치를 담은 시각 결과 | 가져오는 앱에 같은 폰트가 없으면 글자 모양과 폭이 달라질 수 있습니다. |
+| HTML/CSS ZIP | 선택한 웹폰트·고지문을 포함한 오프라인 레이아웃 | 좁은 화면에서는 본문이 읽기 순서대로 재배치됩니다. |
+| 설정 JSON | 현재 그리드 설정의 보관·재사용 | 시각 결과 자체가 아니라 설정값을 담습니다. |
+
+<details>
+<summary>화면 예시 보기</summary>
+
+**A4 · Libre Baskerville · 모듈을 결합한 두 단 구성**
+
+![A4 인쇄용 구성](docs/screenshots/grid-system-print.png)
+
+**디자인에서 개발까지, 세 가지 내보내기**
+
+![SVG, HTML/CSS, JSON 내보내기](docs/screenshots/grid-system-export.png)
+
+</details>
+
+## 개발 및 배포
+
+상태: 구현·로컬 검증·비공개 GitHub push·Cloudflare Pages 배포 완료.
 
 Node.js 22.12 이상을 사용합니다.
 
@@ -61,6 +95,8 @@ npm run test:e2e
 $env:GRID_SYSTEM_BASE_URL = 'https://grid-system.pages.dev'
 npm run test:e2e
 ```
+
+README의 이미지는 배포된 앱에서 직접 캡처했습니다. `node scripts/capture-readme.mjs`로 같은 화면을 다시 생성할 수 있습니다.
 
 ## 글꼴, SVG, 라이선스
 
