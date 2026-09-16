@@ -2,7 +2,7 @@
 
 Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮기는 브라우저 기반 레이아웃 도구입니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
 
-상태: 구현과 로컬 검증, 비공개 GitHub push 완료. Cloudflare Pages는 사용자 로그인·GitHub App 연결 대기이며 아직 배포되지 않았습니다. [검증과 남은 단계](VERIFICATION.md)를 확인하세요.
+상태: 구현·로컬 검증·비공개 GitHub push·Cloudflare Pages 배포 완료. [Grid System 열기](https://grid-system.pages.dev/) · [검증 기록](VERIFICATION.md).
 
 ## 기능
 
@@ -33,6 +33,15 @@ npm run preview
 
 Cloudflare Pages의 Git integration에서는 `main`을 production branch로 두고, build command에 `npm run build`, build output directory에 `dist`를 지정합니다. Pages 프로젝트와 GitHub repository의 공개성은 별개입니다. 이 저장소는 private이며 앱은 공개합니다. 제공된 샘플 발췌문과 웹폰트는 방문자의 브라우저에 전달되지만, 참고 도서 PDF는 저장소와 배포에 포함하지 않습니다. API 자격 증명은 환경 변수로만 전달합니다.
 
+배포 주소는 https://grid-system.pages.dev/ 입니다. `main` push의 자동 프로덕션 배포는 켜져 있으며, 다른 브랜치의 preview 배포와 PR 댓글은 꺼져 있습니다. Node.js는 `.node-version`과 Pages 환경 변수의 `22.15.0`으로 고정합니다.
+
+PowerShell에서 `CLOUDFLARE_API_TOKEN`과 `CLOUDFLARE_ACCOUNT_ID`가 설정되어 있으면 다음 명령으로 상태 조회 또는 연결된 `main`의 수동 재배포를 할 수 있습니다. 토큰을 명령에 직접 적거나 저장소에 저장하지 마세요. `-Create`는 최초 프로젝트 생성용이며 이미 생성된 프로젝트에는 사용하지 않습니다.
+
+```powershell
+.\scripts\deploy-pages.ps1
+.\scripts\deploy-pages.ps1 -Deploy
+```
+
 ## 검증
 
 변경마다 다음 검증을 적용합니다.
@@ -45,6 +54,13 @@ npm run test:e2e
 ```
 
 브라우저 테스트는 로컬 Chrome을 사용합니다. 20/32분할 전환, 12종 폰트, 프리셋과 실제 인쇄 치수, 잘못된 수치·JSON, 폰트 로딩 실패·재시도, 좁은 화면, 오프라인 HTML/CSS 파일을 확인합니다. 실제 결과는 [VERIFICATION.md](VERIFICATION.md)에 기록합니다.
+
+배포된 앱에 같은 테스트를 실행하려면:
+
+```powershell
+$env:GRID_SYSTEM_BASE_URL = 'https://grid-system.pages.dev'
+npm run test:e2e
+```
 
 ## 글꼴, SVG, 라이선스
 

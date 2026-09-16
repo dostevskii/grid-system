@@ -1,4 +1,4 @@
-param([switch]$Create)
+param([switch]$Create, [switch]$Deploy)
 
 $ErrorActionPreference = 'Stop'
 $projectName = 'grid-system'
@@ -38,7 +38,17 @@ if ($Create) {
     if ($_.ErrorDetails.Message) { Write-Output $_.ErrorDetails.Message }
     throw 'Pages Git integration creation failed; check the reported error and repository access. Credentials were not logged.'
   }
-} else {
+}
+if ($Deploy) {
+  $project = Invoke-RestMethod -Uri $projectUri -Headers $cfHeaders
+  if ($project.result.source.type -ne 'github' -or $project.result.source.config.owner -ne 'dostevskii' -or $project.result.source.config.repo_name -ne 'grid-system' -or $project.result.production_branch -ne 'main') {
+    throw 'The expected Git-integrated project and production branch were not verified.'
+  }
+  $deployment = Invoke-RestMethod -Method Post -Uri "$projectUri/deployments" -Headers $cfHeaders -ContentType 'application/json' -Body '{}'
+  if (-not $deployment.success) { throw 'Cloudflare did not confirm deployment creation.' }
+  [pscustomobject]@{ DeploymentId = $deployment.result.id; Url = $deployment.result.url; Status = $deployment.result.latest_stage.status; Commit = $deployment.result.deployment_trigger.metadata.commit_hash }
+}
+if (-not $Create -and -not $Deploy) {
   $project = Invoke-RestMethod -Uri $projectUri -Headers $cfHeaders
   $deployments = Invoke-RestMethod -Uri "$projectUri/deployments" -Headers $cfHeaders
   [pscustomobject]@{ Name = $project.result.name; Domain = $project.result.subdomain; Source = $project.result.source.type }

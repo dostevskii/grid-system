@@ -1,7 +1,7 @@
 # Grid System 제작 계획
 
 작성일: 2026-09-16  
-상태: 2026-09-16 전체 계획 승인 후 구현·로컬 검증·비공개 GitHub push를 마쳤다. Cloudflare Pages는 Git 연동 오류와 브라우저 로그인 필요로 연결 대기 중이며 아직 공개 배포되지 않았다. 실제 검증 결과와 남은 절차는 README.md와 VERIFICATION.md에 기록한다.  
+상태: 2026-09-16 전체 계획 승인 후 구현·로컬 검증·비공개 GitHub push·Cloudflare Pages 배포를 마쳤다. 공개 주소 https://grid-system.pages.dev/ 에서 브라우저 테스트 8개를 통과했다. 실제 검증 결과와 한계는 README.md와 VERIFICATION.md에 기록한다.  
 이름: Grid System  
 프로젝트 위치: `C:\Users\JohnHB\Documents\Codex\2026-09-16\grid-system`
 
@@ -153,7 +153,7 @@ SVG는 그리드 선과 텍스트를 담는 교환 형식이며, Figma의 네이
 
 승인 후 새 프로젝트 디렉터리에서만 Git을 초기화하고 의미 있는 단위로 커밋한다. 기존 프로젝트나 전역 Git 설정은 수정하지 않는다.
 
-저장소: `dostevskii/grid-system` (Private). GitHub CLI 계정 `dostevskii`로 생성하고 비공개 상태를 확인했다. Pages 프로젝트 이름은 `grid-system`으로 준비한다.
+저장소: `dostevskii/grid-system` (Private). GitHub CLI 계정 `dostevskii`로 생성하고 비공개 상태를 확인했다. Pages 프로젝트 `grid-system`을 생성했으며 공개 주소는 https://grid-system.pages.dev/ 이다.
 
 GitHub 비공개 저장소와 Cloudflare Pages의 Git integration을 연결한다. `main` 푸시를 자동 빌드·배포에 연결하며, 설정은 다음과 같다.
 
@@ -169,7 +169,7 @@ Node와 의존성 버전은 구현 때 호환성을 확인하고 프로젝트에
 
 GitHub 저장소는 비공개로 유지하고, 디자이너들이 사용할 앱은 공개 Pages 사이트로 배포하는 구성을 제안한다. 공개 앱에 포함한 샘플 텍스트와 폰트는 방문자의 브라우저에 전달된다. 제공된 책 PDF는 로컬 참고 자료로만 사용하고 소스 저장소나 배포 파일에 넣지 않는다.
 
-Cloudflare API Token으로 계정의 Pages 목록을 읽을 수 있지만 Git-integrated 프로젝트 생성은 `8000011` Git installation 오류로 실패했다. GitHub 설치 앱 목록에 Cloudflare가 없으며 Cloudflare 대시보드는 로그아웃 상태다. 사용자 로그인과 `grid-system`에 한정된 GitHub App 연결 후 계속한다. 기존 앱 설치·다른 저장소 권한은 변경하지 않았고 Direct Upload 프로젝트로 임의 전환하지 않았다.
+Cloudflare API Token과 Account ID 환경 변수로 Git-integrated 프로젝트 생성과 첫 프로덕션 배포를 완료했다. 최초 Git installation 오류는 사용자 로그인·저장소 한정 앱 승인·재연결 후 해소됐다. 토큰 값은 기록하거나 GitHub에 전달하지 않았으며 다른 저장소 권한은 넓히지 않았다. Direct Upload로 전환하지 않고 승인된 Git integration과 `main` 자동 배포를 유지했다.
 
 ## 8. 구현 순서와 완료 기준
 

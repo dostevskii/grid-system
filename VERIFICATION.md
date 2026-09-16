@@ -29,6 +29,13 @@
 
 비공개 GitHub 저장소 https://github.com/dostevskii/grid-system 의 Private 상태와 `main` push를 확인했다. 구현 커밋 `8813402`의 GitHub Actions 빌드·단위 테스트도 성공했다.
 
-Cloudflare Pages 생성 API는 `8000011`(Git installation 오류)을 반환했다. API로 프로젝트가 생성되지 않았음을 확인했으며 GitHub 설치 앱 목록에는 Cloudflare가 없다. Cloudflare 대시보드는 로그인 화면이므로 사용자 로그인·해당 저장소에 한정된 GitHub App 승인이 남았다. 공개 배포 URL은 아직 없으며 배포 성공으로 간주하지 않는다.
+사용자 승인 후 Cloudflare GitHub App을 `grid-system` 저장소에 한정해 연결했다. 최초 `8000011` Git installation 오류와 연결 복귀 문제는 앱 재연결 후 해소됐으며, Git-integrated Pages 프로젝트 `grid-system`을 환경 변수 인증으로 생성했다. Direct Upload로 전환하지 않았고 토큰을 저장소나 GitHub Actions에 복사하지 않았다.
 
-로컬 미리보기 http://127.0.0.1:5173/ 를 브라우저에 열어 두었다. 배포 후에는 `GRID_SYSTEM_BASE_URL` 환경 변수를 공개 주소로 지정하여 브라우저 테스트를 실행할 수 있다.
+- 공개 주소: https://grid-system.pages.dev/
+- 첫 배포: `02a5e075-25b8-4183-9f27-9c0044ae79f1`, `production`, 최종 `deploy/success`.
+- 검증 대상 커밋: `7b0aee7556d58672675bd0738ec1a4e0a216dd28`.
+- 배포 설정: GitHub `dostevskii/grid-system`, `main`, `npm run build`, `dist`, Node.js `22.15.0`. `main` 자동 배포 활성화, 다른 브랜치 preview와 PR 댓글 비활성화.
+- 공개 주소에서 `GRID_SYSTEM_BASE_URL=https://grid-system.pages.dev`로 브라우저 테스트 8개 전부 통과(25.7초). 12종 폰트, 모바일, 입력·폰트 실패 복구, 세 형식 다운로드와 오프라인 출력, SVG/HTML 배치 일치를 확인했다.
+- HTTPS 응답 `200`, CSP와 `X-Frame-Options: DENY` 적용을 확인했다. 실제 Chrome에서 초기 20분할·Inter 문단과 로딩 완료 상태를 시각적으로 확인했다.
+- 배포 후 GitHub 저장소의 `isPrivate: true`를 재확인했다.
+- 배포 스크립트의 PowerShell 구문 검사와 읽기 전용 상태 조회가 통과했다. `-Deploy`의 정상 요청과 다른 저장소 차단도 네트워크 없는 mock 검사로 확인했다. `-Deploy`는 검증된 Git 저장소·production branch의 첫 배포/재배포 요청을 지원한다.
