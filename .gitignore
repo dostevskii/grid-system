@@ -1,0 +1,13 @@
+node_modules/
+dist/
+test-results/
+test-results-parity/
+test-results-parity-app/
+playwright-report/
+.wrangler/
+.env
+.env.*
+!.env.example
+*.log
+tmp/
+.DS_Store

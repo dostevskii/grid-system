@@ -1,0 +1,161 @@
+{
+  "characters": "äöüÄÖÜß«»",
+  "families": {
+    "Libre Baskerville": {
+      "files": [
+        "public/fonts/google/libre-baskerville/libre-baskerville-0.woff2",
+        "public/fonts/google/libre-baskerville/libre-baskerville-1.woff2",
+        "public/fonts/google/libre-baskerville/libre-baskerville-2.woff2",
+        "public/fonts/google/libre-baskerville/libre-baskerville-3.woff2",
+        "public/fonts/google/libre-baskerville/libre-baskerville-4.woff2",
+        "public/fonts/google/libre-baskerville/libre-baskerville-5.woff2"
+      ],
+      "missing": []
+    },
+    "EB Garamond": {
+      "files": [
+        "public/fonts/google/eb-garamond/eb-garamond-0.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-1.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-10.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-11.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-12.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-13.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-2.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-3.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-4.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-5.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-6.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-7.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-8.woff2",
+        "public/fonts/google/eb-garamond/eb-garamond-9.woff2"
+      ],
+      "missing": []
+    },
+    "Cormorant": {
+      "files": [
+        "public/fonts/google/cormorant/cormorant-0.woff2",
+        "public/fonts/google/cormorant/cormorant-1.woff2",
+        "public/fonts/google/cormorant/cormorant-2.woff2",
+        "public/fonts/google/cormorant/cormorant-3.woff2",
+        "public/fonts/google/cormorant/cormorant-4.woff2",
+        "public/fonts/google/cormorant/cormorant-5.woff2",
+        "public/fonts/google/cormorant/cormorant-6.woff2",
+        "public/fonts/google/cormorant/cormorant-7.woff2",
+        "public/fonts/google/cormorant/cormorant-8.woff2",
+        "public/fonts/google/cormorant/cormorant-9.woff2"
+      ],
+      "missing": []
+    },
+    "Inter": {
+      "files": [
+        "public/fonts/google/inter/inter-0.woff2",
+        "public/fonts/google/inter/inter-1.woff2",
+        "public/fonts/google/inter/inter-2.woff2",
+        "public/fonts/google/inter/inter-3.woff2",
+        "public/fonts/google/inter/inter-4.woff2",
+        "public/fonts/google/inter/inter-5.woff2",
+        "public/fonts/google/inter/inter-6.woff2"
+      ],
+      "missing": []
+    },
+    "Montserrat": {
+      "files": [
+        "public/fonts/google/montserrat/montserrat-0.woff2",
+        "public/fonts/google/montserrat/montserrat-1.woff2",
+        "public/fonts/google/montserrat/montserrat-2.woff2",
+        "public/fonts/google/montserrat/montserrat-3.woff2",
+        "public/fonts/google/montserrat/montserrat-4.woff2",
+        "public/fonts/google/montserrat/montserrat-5.woff2",
+        "public/fonts/google/montserrat/montserrat-6.woff2",
+        "public/fonts/google/montserrat/montserrat-7.woff2",
+        "public/fonts/google/montserrat/montserrat-8.woff2",
+        "public/fonts/google/montserrat/montserrat-9.woff2"
+      ],
+      "missing": []
+    },
+    "Lato": {
+      "files": [
+        "public/fonts/google/lato/lato-0.woff2",
+        "public/fonts/google/lato/lato-1.woff2",
+        "public/fonts/google/lato/lato-10.woff2",
+        "public/fonts/google/lato/lato-11.woff2",
+        "public/fonts/google/lato/lato-12.woff2",
+        "public/fonts/google/lato/lato-13.woff2",
+        "public/fonts/google/lato/lato-14.woff2",
+        "public/fonts/google/lato/lato-15.woff2",
+        "public/fonts/google/lato/lato-16.woff2",
+        "public/fonts/google/lato/lato-17.woff2",
+        "public/fonts/google/lato/lato-18.woff2",
+        "public/fonts/google/lato/lato-19.woff2",
+        "public/fonts/google/lato/lato-2.woff2",
+        "public/fonts/google/lato/lato-3.woff2",
+        "public/fonts/google/lato/lato-4.woff2",
+        "public/fonts/google/lato/lato-5.woff2",
+        "public/fonts/google/lato/lato-6.woff2",
+        "public/fonts/google/lato/lato-7.woff2",
+        "public/fonts/google/lato/lato-8.woff2",
+        "public/fonts/google/lato/lato-9.woff2"
+      ],
+      "missing": []
+    },
+    "Oswald": {
+      "files": [
+        "public/fonts/google/oswald/oswald-0.woff2",
+        "public/fonts/google/oswald/oswald-1.woff2",
+        "public/fonts/google/oswald/oswald-2.woff2",
+        "public/fonts/google/oswald/oswald-3.woff2",
+        "public/fonts/google/oswald/oswald-4.woff2"
+      ],
+      "missing": []
+    },
+    "Outfit": {
+      "files": [
+        "public/fonts/google/outfit/outfit-0.woff2",
+        "public/fonts/google/outfit/outfit-1.woff2"
+      ],
+      "missing": []
+    },
+    "Pretendard": {
+      "files": [
+        "public/fonts/pretendard/PretendardVariable.woff2"
+      ],
+      "missing": []
+    },
+    "Wanted Sans": {
+      "files": [
+        "public/fonts/wanted-sans/WantedSansVariable.woff2"
+      ],
+      "missing": []
+    },
+    "열린명조": {
+      "files": [
+        "public/fonts/yeolrin/YeolrinMyeongjo-Bold.woff2",
+        "public/fonts/yeolrin/YeolrinMyeongjo-Light.woff2",
+        "public/fonts/yeolrin/YeolrinMyeongjo-Medium.woff2"
+      ],
+      "missing": [
+        "ä",
+        "ö",
+        "ü",
+        "Ä",
+        "Ö",
+        "Ü"
+      ]
+    },
+    "열린고딕": {
+      "files": [
+        "public/fonts/yeolrin/YeolrinGothic-Bold.woff2",
+        "public/fonts/yeolrin/YeolrinGothic-Light.woff2",
+        "public/fonts/yeolrin/YeolrinGothic-Medium.woff2"
+      ],
+      "missing": [
+        "ä",
+        "ö",
+        "ü",
+        "Ä",
+        "Ö",
+        "Ü"
+      ]
+    }
+  }
+}

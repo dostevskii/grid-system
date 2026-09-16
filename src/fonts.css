@@ -1,0 +1,15 @@
+/* UI faces load eagerly; selected canvas/export faces load from fonts.ts. */
+@import url("/fonts/google/inter/inter.css");
+
+@font-face {
+  font-family: "Pretendard Variable";
+  font-style: normal;
+  font-weight: 45 920;
+  font-display: swap;
+  src: url("/fonts/pretendard/PretendardVariable.woff2") format("woff2");
+}
+
+:root {
+  font-family: "Inter", "Pretendard Variable", system-ui, sans-serif;
+  font-synthesis: none;
+}

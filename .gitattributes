@@ -1,0 +1,4 @@
+* text=auto eol=lf
+*.woff2 binary
+*.md whitespace=-blank-at-eol
+public/font-notices/*.txt -whitespace

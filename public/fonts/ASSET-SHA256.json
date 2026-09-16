@@ -1,0 +1,494 @@
+[
+  {
+    "id": "pretendard",
+    "version": "1.3.9",
+    "path": "public/fonts/pretendard/PretendardVariable.woff2",
+    "sha256": "9599f12fd42fc0bce1cd50b47a0c022e108d7aa64dd0d1bb0ed44f3282d900b4"
+  },
+  {
+    "id": "wanted-sans",
+    "version": "1.0.3",
+    "path": "public/fonts/wanted-sans/WantedSansVariable.woff2",
+    "sha256": "4259e7e9a172e634c2cb419d793b84148990316341e910443e5d10965b2c8f16"
+  },
+  {
+    "id": "yeolrin-gothic-light",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinGothic-Light.woff2",
+    "sha256": "a3b830d888990e91a1004a06749ad54a6f72ed6a4d3a9764e3b6478279e04a44"
+  },
+  {
+    "id": "yeolrin-gothic-medium",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinGothic-Medium.woff2",
+    "sha256": "73944c69c13ba15549ea583731250a588e6f43635b6478c3ebbf0221bbe60f81"
+  },
+  {
+    "id": "yeolrin-gothic-bold",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinGothic-Bold.woff2",
+    "sha256": "174d952affbde3341ea81c13e8c45b1a5fb8dab22d0b3549300921fda9573181"
+  },
+  {
+    "id": "yeolrin-myeongjo-light",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinMyeongjo-Light.woff2",
+    "sha256": "b9fc50043594041617584f2abee013f951f0a33ad112255e1bfed5155f913bde"
+  },
+  {
+    "id": "yeolrin-myeongjo-medium",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinMyeongjo-Medium.woff2",
+    "sha256": "b598d9b552a736f46e0c318d1a8ac4e930caee58d1476341c217386b033db4d4"
+  },
+  {
+    "id": "yeolrin-myeongjo-bold",
+    "version": "1.0.0",
+    "path": "public/fonts/yeolrin/YeolrinMyeongjo-Bold.woff2",
+    "sha256": "8c4173177c4642c4f57fcbd9539968772c5f9e16836d3f7679d969d6c80b80c8"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-0.woff2",
+    "sha256": "3874c62309273fb7aea1b2cd50345557940b621b93af608538a3e6a7c6dcc31b"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-1.woff2",
+    "sha256": "efb7e5f4376a557314f5bb9f5197ef837d86c0ab38e1a50a0ff5c60c3400c629"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-2.woff2",
+    "sha256": "8f7537ce3a6c1c0d0e93a9530432df13953312d378713a059e9a6cf0d0cde8b9"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-3.woff2",
+    "sha256": "22219fb90e3b9bd28debd1825fe8d9a0154a0e31f8b3fa601ac1a0a5aa5e6d1b"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-4.woff2",
+    "sha256": "8f7537ce3a6c1c0d0e93a9530432df13953312d378713a059e9a6cf0d0cde8b9"
+  },
+  {
+    "id": "libre-baskerville",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/libre-baskerville/libre-baskerville-5.woff2",
+    "sha256": "22219fb90e3b9bd28debd1825fe8d9a0154a0e31f8b3fa601ac1a0a5aa5e6d1b"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-0.woff2",
+    "sha256": "eaf57cf096f40598c99a9270dc232a0905833fc05aa38a7a93ad8801bde38960"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-1.woff2",
+    "sha256": "f44e7241c210c6938410dadc5806bb33e8f526a28a0fdcf58c41b33bcc55321b"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-2.woff2",
+    "sha256": "cfc214072c52df3721890638bf0dcd8a5a0e2c99653d59b4b766ab867da05b4c"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-3.woff2",
+    "sha256": "9f7c3dc0c1fdbc8b09d53d1beb4aca048a5aff376ac5423878e03e83e89a7fe8"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-4.woff2",
+    "sha256": "0eb22e3d769a66a92dbd82e3aefa5740e5bc21afa4485f62f92b22656d49182a"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-5.woff2",
+    "sha256": "0f7f5f2fbb4eae126790fe6f01659ab3ee0806e8038a941908e893020569f51a"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-6.woff2",
+    "sha256": "a187b077090fe8ae3fd2d7496aabbeae604819c718a282e0afc92df72b450766"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-7.woff2",
+    "sha256": "26b2403f995ed65fb49037a6498c074d3ec3c36031a69fc368c4c2180e2c01fa"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-8.woff2",
+    "sha256": "54d9a78b7ff60b689ad9f3017ffac8547b5d871afec733f6c1c3ae36577ee504"
+  },
+  {
+    "id": "montserrat",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/montserrat/montserrat-9.woff2",
+    "sha256": "06b16db7a969135d48d38c49183be7fb88d4452e2a3011957c7851941f4e4879"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-0.woff2",
+    "sha256": "5a7499fae103446ed709a2aaab7dbabb13ad1841a5258c0dd5b56750067ac2f1"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-1.woff2",
+    "sha256": "640020b01622b1c76c8f4137a3f39608fa22d718e17cb3e1d972e69c755ff6e0"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-2.woff2",
+    "sha256": "4caf65dfd9a97861e20565bcec00273c1e157af7eb4f6af7bd61f3462feb7e09"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-3.woff2",
+    "sha256": "288deb73f6a27a306138997d310e4efbfba9bb623eca0829be0e4475ff164b71"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-4.woff2",
+    "sha256": "b086ea6d8bc9bc670c11015f13df0776c430b6c26a78a73b4dce9ddb423623c1"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-5.woff2",
+    "sha256": "fa866520f8b7fb646ebc730fd0d3cbf8945db74d92f25fdd6fee486808652fdf"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-6.woff2",
+    "sha256": "c664773f7e1d42d36326aa457becf7674236168c74cf7d74e87e5778ef7640f9"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-7.woff2",
+    "sha256": "7738b6004721f3d23e4e284b1055120f0ac1fd96fd01e5786b58b3042998876c"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-8.woff2",
+    "sha256": "197ed98b8524dd8664aefb5d5ef4ca515d2df1ef90d3f771e19cb0893b95cc2b"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-9.woff2",
+    "sha256": "3cd432d0dc2b756e69eea4325fd40f3515a31753445238f7fb5d349588192511"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-10.woff2",
+    "sha256": "f6475b2f7530f248b5d3a0237d97dc2e1987665153dcb888fbeea3b0f9019b56"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-11.woff2",
+    "sha256": "af68d0b256558e0fecffabca6696d47c78902249db6bc7e1ac9964980a610a77"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-12.woff2",
+    "sha256": "f8d3fa06e20989a938972165406a1b731cdc7fe33ff2b0b6798c75aa63709901"
+  },
+  {
+    "id": "eb-garamond",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/eb-garamond/eb-garamond-13.woff2",
+    "sha256": "88603384163d301aebd5bd769832a8bfe3c9004ec24178417b9817f0ad32c63b"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-0.woff2",
+    "sha256": "3792cec536fb3b2f03fa490b6f47ce2ecbc54d0777d16e64330f1f193dc59f8b"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-1.woff2",
+    "sha256": "8c18ac3689771ce85ad2592351a763123ea543530f2d4bafdb43233fba3b1d96"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-2.woff2",
+    "sha256": "adfd4f3173acedd338e3668ab78085015346153672532ab650e5bc560f1745c3"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-3.woff2",
+    "sha256": "b1555b55651c40423806d268f43d3da13a59c589b3f52605c3762a8629be856a"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-4.woff2",
+    "sha256": "6083e8c70461baccba95129ff8c91624f81b7d29a806a18b5d5916eaa44f03c3"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-5.woff2",
+    "sha256": "a5b592533efe6d846672c97c62d4a1d25b7f4614f35c7db387e2bbb5b34e8d2d"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-6.woff2",
+    "sha256": "cd2f59cc00e177e6263f413dc1995ca1648023a1c94e5d5e2dbeea8dac443229"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-7.woff2",
+    "sha256": "b532f2551efe1722df90c0695c21fe2898202b17819c544155e8ab2f58747656"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-8.woff2",
+    "sha256": "aeb47ae07faf841b22e87a63f6c23b5dd0aba805798a99eb5825895d89371602"
+  },
+  {
+    "id": "cormorant",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/cormorant/cormorant-9.woff2",
+    "sha256": "766e1b19fa74895763cef708f4b360b887e5a836725869ca672a0753bf19bd53"
+  },
+  {
+    "id": "oswald",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/oswald/oswald-0.woff2",
+    "sha256": "ff62316167dc2f9cae9dea3707afcc4cf571b7f6744304ba45f2fbc40dd74179"
+  },
+  {
+    "id": "oswald",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/oswald/oswald-1.woff2",
+    "sha256": "9307b75d3508236a0bae4f29ee3d2ce9aee545120ec9ef29e2cd1187bf6b0e5b"
+  },
+  {
+    "id": "oswald",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/oswald/oswald-2.woff2",
+    "sha256": "ca8ab22d32ea765f3a8f7112b8bea5af717fa7f4b65fa3823ae4cf3d4a95189c"
+  },
+  {
+    "id": "oswald",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/oswald/oswald-3.woff2",
+    "sha256": "7989ccc7770f5aeffa67e088bcd3b294d42fae2f8b0eca3c3c51b953d1f735cc"
+  },
+  {
+    "id": "oswald",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/oswald/oswald-4.woff2",
+    "sha256": "bd73278ee0c50041b91b4c03d1229e35b501637f46b6409e7da2d3a758446ea5"
+  },
+  {
+    "id": "outfit",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/outfit/outfit-0.woff2",
+    "sha256": "0f53d1c03b3918d744a843b5039001ee31695ca1e255e3914188df81beb461e9"
+  },
+  {
+    "id": "outfit",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/outfit/outfit-1.woff2",
+    "sha256": "6c18d579fd87c3776be068b762cbc83fde3acb543d49eabd3ade842eb987e887"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-0.woff2",
+    "sha256": "f1eb249dd0bb72847fde168605c8d741b0f1d5507f9729f1fbded1e76d1bd022"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-1.woff2",
+    "sha256": "b19efe906c9b0345db45525ed83c76031644e39329a36d39badf5275bce363c2"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-2.woff2",
+    "sha256": "43637f0d04e91f514540cf00da1010be1f56199f89368cd0cb31b6da813cafb0"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-3.woff2",
+    "sha256": "a961366b4346f6078cc2f164d2c019f63b37e2693f6fc93a995048a98b25c083"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-4.woff2",
+    "sha256": "077a69d5b698467f49de34980815c848fecb40e35f4b3969b42a703b8b916953"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-5.woff2",
+    "sha256": "bca1d88ada544d9c80872d4da27133fab6d347361fa26e932b47ec9559088fd0"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-6.woff2",
+    "sha256": "72373c5fe499b7b978e186b6550ee6c4a8dc0c9b77fb46a4d76a572c1986466e"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-7.woff2",
+    "sha256": "6c84348296ebe2e2a0830c3962eb02156419d9bc76371c2eadaf7329d827d550"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-8.woff2",
+    "sha256": "f9741d4c57a3bae60dbfe04238e74385f639ab38df136d96731127a48f7f3eee"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-9.woff2",
+    "sha256": "d32335c2c5fd5de9ee5f3d3b1fe4d9dde14aad16eda570a35018b0ff1dc093d2"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-10.woff2",
+    "sha256": "866f6fd412405fd5308ed8adde4469cab689ec44056fe719e27e5923021a57ff"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-11.woff2",
+    "sha256": "a79b4c65b454a795ff3868156f54be09ac8360b9fd3ba21431b5c48fd9b66afa"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-12.woff2",
+    "sha256": "5627143aaeb49ba46b4614d4fefb967ad8d163fb0743a2fa9c7e53930e559062"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-13.woff2",
+    "sha256": "115f6a626ca115d4ad5581b59275327e0e860b30330a52b0f785561332dd2429"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-14.woff2",
+    "sha256": "8b9fc9737043f88c1a9a7195c27a239bd329cc33d928ffb67736c61ae7a1dbbd"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-15.woff2",
+    "sha256": "918b7dc3e2e2d015c16ce08b57bcb64d2253bafc1707658f361e72865498e537"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-16.woff2",
+    "sha256": "3a5797f440bc67b59830cad81e59a71011e35cb45ed7f747b61a69b0a9b0d6ae"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-17.woff2",
+    "sha256": "c447dd7677b419db7b21dbdfc6277c7816a913ffda76fd2e52702df538de0e49"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-18.woff2",
+    "sha256": "e266d64fae0958748c289b2288e29991b4b8386eb4935517c4544a2478cfb703"
+  },
+  {
+    "id": "lato",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/lato/lato-19.woff2",
+    "sha256": "08664859baab5ed98f0bf818ed77e38464ff1826dc6406d5ecbd651409afbd92"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-0.woff2",
+    "sha256": "e3a8d2d7497a325b85c2e0c9d931ba1741415d23d1f828ebc5ce8c116dab44e8"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-1.woff2",
+    "sha256": "e1dea13a93c69f52837e370541ffe132508352666e9288ab910f2c422f4b9b50"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-2.woff2",
+    "sha256": "e0f32d9ee75a83f4031e1a7bc8926f962278e282d3535be7d8dbeb3bd62914b5"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-3.woff2",
+    "sha256": "93c5ac80e25cda1cf289206c724027eeb187c9d398106f0079a912cbe80616ce"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-4.woff2",
+    "sha256": "935ab355938e6cd9b5fa39f2c3250ee16f3b08807c65dc4162356b50dbc8c7a2"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-5.woff2",
+    "sha256": "5e6d4fe9d9f4bff8b2a2469d25ab19576bb85331e22c6ed51398e16f95d56a9c"
+  },
+  {
+    "id": "inter",
+    "version": "Google Fonts CSS2 (2026-09-16)",
+    "path": "public/fonts/google/inter/inter-6.woff2",
+    "sha256": "2c295d99e26dcf357d4d01bcf270fd6924b600c9a13dd8c363ef114f4c6976fa"
+  }
+]
