@@ -37,7 +37,15 @@
 - 원래 샘플의 미완성 마지막 구절도 보존한다.
 - 폰트 출처와 이용 근거의 상세 내용은 `public/font-notices/`에 포함한다.
 
-## 배포
+## 1.1.0 배포
+
+- 앱 코드 커밋 `ad4aa3038cb23bece1a423a869bdd61b30a856b7`을 비공개 GitHub `main`에 push했다. GitHub Actions 빌드·단위 테스트가 성공했다.
+- Cloudflare Git 자동 배포 `6b62d95f-2217-434c-b12e-220645181dcb`의 production `deploy/success`를 확인했다.
+- https://grid-system.pages.dev/ 에서 전체 브라우저 테스트 **11/11 통과 (17.5초)**. 영어/한국어, 시드 JSON 재현·복원, 새 시드, 자유 배치, 1px 겹침 출력과 기존 기능을 확인했다.
+- 공개 주소의 HTTP 200, 영어 기본 HTML, 로컬 빌드와 같은 JavaScript asset `/assets/index-DPuYzvon.js`, `X-Frame-Options: DENY`를 확인했다.
+- 저장소의 Private 상태와 About의 상세 설명·홈페이지 주소를 확인했다. 인증 정보와 참고 PDF는 추가하지 않았다.
+
+## 1.0.0 초기 배포
 
 비공개 GitHub 저장소 https://github.com/dostevskii/grid-system 의 Private 상태와 `main` push를 확인했다. 구현 커밋 `8813402`의 GitHub Actions 빌드·단위 테스트도 성공했다.
 
