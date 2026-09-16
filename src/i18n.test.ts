@@ -4,6 +4,12 @@ import { translateMessage, translatePreset } from "./i18n";
 import { PRESETS } from "./presets";
 
 describe("English and Korean interface messages", () => {
+  it("reports font-size limits in points in both UI languages", () => {
+    const [message] = validateSettings({ ...DEFAULT_SETTINGS, fontSize: 5 });
+    expect(translateMessage("ko", message!)).toBe("글자 크기는 4.5~90pt 범위여야 합니다.");
+    expect(translateMessage("en", message!)).toBe("Font size must be between 4.5 and 90pt.");
+  });
+
   it("translates every validation message, including joined JSON import errors", () => {
     const invalid = [
       null, {},

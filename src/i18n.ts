@@ -75,7 +75,7 @@ export function translateMessage(locale: Locale, message: string): string {
     "간격의 모든 값은 0 이상의 유한수여야 합니다.": "Every gutter value must be a finite number greater than or equal to 0.",
     "등록되지 않은 폰트입니다.": "The font is not registered.",
     "선택한 폰트가 지원하는 글자 굵기를 선택하세요.": "Choose a font weight supported by the selected font.",
-    "글자 크기는 6~120px 범위여야 합니다.": "Font size must be between 6 and 120px.",
+    "글자 크기는 4.5~90pt 범위여야 합니다.": "Font size must be between 4.5 and 90pt.",
     "행간은 1~160px 범위여야 합니다.": "Line height must be between 1 and 160px.",
     "자간은 -2~10px 범위여야 합니다.": "Letter spacing must be between -2 and 10px.",
     "색상은 #RRGGBB 형식이어야 합니다.": "Colors must use the #RRGGBB format.",

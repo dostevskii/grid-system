@@ -225,7 +225,7 @@ export function validateSettings(value: unknown): string[] {
   )
     errors.push("선택한 폰트가 지원하는 글자 굵기를 선택하세요.");
   if (!finite(s.fontSize) || s.fontSize < 6 || s.fontSize > 120)
-    errors.push("글자 크기는 6~120px 범위여야 합니다.");
+    errors.push("글자 크기는 4.5~90pt 범위여야 합니다.");
   if (!finite(s.lineHeight) || s.lineHeight < 1 || s.lineHeight > 160)
     errors.push("행간은 1~160px 범위여야 합니다.");
   if (!finite(s.letterSpacing) || s.letterSpacing < -2 || s.letterSpacing > 10)

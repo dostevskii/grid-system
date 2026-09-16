@@ -25,6 +25,8 @@ import { FONTS, getFont, loadFont, makeMeasurer, nearestWeight } from "./fonts";
 import sample from "./sample.txt?raw";
 
 const STORAGE_KEY = "grid-system.settings.v1";
+// Keep settings/export geometry in CSS px; edit font sizes exclusively in pt.
+const FONT_POINTS_PER_PIXEL = 72 / 96;
 const format = (value: number, digits = 2) =>
   Number(value.toFixed(digits)).toLocaleString("en-US", {
     maximumFractionDigits: digits,
@@ -316,7 +318,6 @@ export default function App() {
   const [inputUnit, setInputUnit] = useState<"px" | "mm">(
     settings.page.mode === "web" ? "px" : "mm",
   );
-  const [typeUnit, setTypeUnit] = useState<"px" | "pt">("px");
   const [linkedMargins, setLinkedMargins] = useState(() => {
     const margin = initial.settings.margin;
     return margin.top === margin.right && margin.top === margin.bottom && margin.top === margin.left;
@@ -518,7 +519,6 @@ export default function App() {
   }
 
   const numberProps = { invalidChanged };
-  const typeFactor = typeUnit === "pt" ? 0.75 : 1;
 
   function applySeed() {
     if (!isSeedValid) return;
@@ -565,7 +565,7 @@ export default function App() {
             ))}
           </span>
           <span>
-            Grid System<span className="version">1.1.0</span>
+            Grid System<span className="version">1.1.1</span>
           </span>
         </a>
         <div className="header-presets" aria-label={tr("gridSettings")}>
@@ -1069,17 +1069,6 @@ export default function App() {
             <section className="control-section">
               <div className="section-heading">
                 <h2>{tr("typography")}</h2>
-                <select
-                  aria-label={tr("typeUnit")}
-                  className="unit-select"
-                  value={typeUnit}
-                  onChange={(event) =>
-                    setTypeUnit(event.target.value as "px" | "pt")
-                  }
-                >
-                  <option value="px">px</option>
-                  <option value="pt">pt</option>
-                </select>
               </div>
               <button
                 className="picker-button font-picker"
@@ -1096,12 +1085,12 @@ export default function App() {
               <div className="two-columns">
                 <NumberField
                   label={tr("fontSize")}
-                  value={settings.fontSize * typeFactor}
-                  onChange={(value) => change("fontSize", value / typeFactor)}
-                  unit={typeUnit}
-                  min={6 * typeFactor}
-                  max={120 * typeFactor}
-                  step={0.5}
+                  value={settings.fontSize * FONT_POINTS_PER_PIXEL}
+                  onChange={(value) => change("fontSize", value / FONT_POINTS_PER_PIXEL)}
+                  unit="pt"
+                  min={6 * FONT_POINTS_PER_PIXEL}
+                  max={120 * FONT_POINTS_PER_PIXEL}
+                  step={0.25}
                   {...numberProps}
                 />
                 <label className="select-field">
@@ -1140,12 +1129,12 @@ export default function App() {
               />
               <RangeField
                 label={tr("lineHeight")}
-                value={settings.lineHeight * typeFactor}
-                onChange={(value) => change("lineHeight", value / typeFactor)}
-                min={1 * typeFactor}
-                max={160 * typeFactor}
+                value={settings.lineHeight}
+                onChange={(value) => change("lineHeight", value)}
+                min={1}
+                max={160}
                 step={0.5}
-                unit={typeUnit}
+                unit="px"
                 {...numberProps}
               />
             </section>
@@ -1554,7 +1543,6 @@ export default function App() {
               onClick={() => {
                 setSettings(structuredClone(DEFAULT_SETTINGS));
                 setInputUnit("px");
-                setTypeUnit("px");
                 setLinkedMargins(true);
                 setLinkedGutters(true);
                 setInvalidFields({});
