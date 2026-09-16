@@ -4,6 +4,12 @@ import { unzipSync } from "fflate";
 
 const fontNames = ["Inter", "Libre Baskerville", "열린명조"] as const;
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("grid-system.language", "ko"),
+  );
+});
+
 async function download(
   page: import("@playwright/test").Page,
   label: string,

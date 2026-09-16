@@ -4,9 +4,11 @@ import {
   DEFAULT_SETTINGS,
   fromPx,
   parseSettings,
+  randomizeSettings,
   toPx,
   validateSettings,
 } from "./core";
+import { FONTS } from "./fonts";
 
 const measure = (text: string, size: number) => ({
   width: text.length * size * 0.5,
@@ -209,7 +211,7 @@ describe("layout calculation", () => {
       "Donaudampf schiff",
     );
   });
-  it("rejects an empty source and stops safely for insufficient line height", () => {
+  it("rejects an empty source and warns while continuing for overlapping line height", () => {
     expect(() => calculateLayout(DEFAULT_SETTINGS, "   \n\t", measure)).toThrow(
       "샘플 원문",
     );
@@ -218,7 +220,7 @@ describe("layout calculation", () => {
       "Alpha Beta",
       measure,
     );
-    expect(result.blocks).toEqual([]);
+    expect(result.blocks.length).toBeGreaterThan(0);
     expect(result.warnings[0]).toContain("행간");
   });
   it("keeps text block flow as a prefix of the source, including long word splits", () => {
@@ -241,5 +243,125 @@ describe("layout calculation", () => {
       .join("")
       .replace(/\s+/g, "");
     expect(source.startsWith(used)).toBe(true);
+  });
+});
+
+describe("deterministic free randomizer", () => {
+  const sample = "Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi Omicron Pi Rho Sigma Tau Upsilon Phi Chi Psi Omega";
+  it("is deterministic, preserves identity fields, and changes every randomized field across seeds", () => {
+    const first = randomizeSettings(DEFAULT_SETTINGS, 41);
+    expect(randomizeSettings({ ...DEFAULT_SETTINGS, columns: 2, rows: 3, seed: -3 }, 41)).toEqual(first);
+    expect(first).toMatchObject({ page: DEFAULT_SETTINGS.page, fontId: "inter", gridColor: DEFAULT_SETTINGS.gridColor, textColor: DEFAULT_SETTINGS.textColor, view: DEFAULT_SETTINGS.view, baseline: DEFAULT_SETTINGS.baseline, layout: "free", seed: 41 });
+    const variants = Array.from({ length: 40 }, (_, seed) => randomizeSettings(DEFAULT_SETTINGS, seed));
+    for (const field of ["columns", "rows", "fontWeight", "fontSize", "lineHeight", "letterSpacing", "density"] as const)
+      expect(new Set(variants.map((item) => item[field])).size).toBeGreaterThan(1);
+    for (const field of ["top", "right", "bottom", "left"] as const)
+      expect(new Set(variants.map((item) => item.margin[field])).size).toBeGreaterThan(1);
+    for (const field of ["x", "y"] as const)
+      expect(new Set(variants.map((item) => item.gutter[field])).size).toBeGreaterThan(1);
+    expect(() => randomizeSettings(DEFAULT_SETTINGS, 1.5)).toThrow("seed");
+  });
+  it("uses supported weights and produces useful, non-overlapping free text for many seeds", () => {
+    for (let seed = 0; seed < 100; seed++) {
+      const settings = randomizeSettings(DEFAULT_SETTINGS, seed);
+      expect(validateSettings(settings)).toEqual([]);
+      expect([100, 200, 300, 400, 500, 600, 700, 800, 900]).toContain(settings.fontWeight);
+      const result = calculateLayout(settings, sample, measure);
+      expect(result.blocks.length).toBeGreaterThan(0);
+      expect(result.blocks[0]?.role).toBe("heading");
+      expect(result.blocks.some((block) => block.lines.length > 0)).toBe(true);
+      const used = new Set<string>();
+      for (const block of result.blocks)
+        for (let row = block.row; row < block.row + block.rowSpan; row++)
+          for (let col = block.col; col < block.col + block.colSpan; col++) {
+            expect(used.has(`${col}:${row}`)).toBe(false);
+            used.add(`${col}:${row}`);
+          }
+    }
+  });
+  it("handles degenerate free grids and every registered font's weights", () => {
+    for (const [columns, rows] of [[1, 1], [1, 5], [5, 1]] as const) {
+      const result = calculateLayout(
+        { ...DEFAULT_SETTINGS, columns, rows, layout: "free", seed: 7 },
+        sample,
+        measure,
+      );
+      expect(result.blocks[0]?.role).toBe("heading");
+    }
+    for (const font of FONTS)
+      for (const fontWeight of font.weights)
+        expect(validateSettings({ ...DEFAULT_SETTINGS, fontId: font.id, fontWeight })).toEqual([]);
+  });
+  it("limits the complete layout, not each block, to 10,000 text lines", () => {
+    const result = calculateLayout(
+      {
+        ...DEFAULT_SETTINGS,
+        page: { ...DEFAULT_SETTINGS.page, width: 1440, height: 16000 },
+        columns: 2,
+        rows: 2,
+        margin: { top: 0, right: 0, bottom: 0, left: 0 },
+        gutter: { x: 0, y: 0 },
+        fontSize: 6,
+        lineHeight: 1,
+        density: 1,
+      },
+      sample,
+      measure,
+    );
+    expect(result.blocks.reduce((total, block) => total + block.lines.length, 0)).toBeLessThanOrEqual(10000);
+    expect(result.warnings.filter((warning) => warning.includes("10,000행")).length).toBe(1);
+  });
+  it("samples broad free geometry and permits headings and body blocks on arbitrary cells", () => {
+    const starts = new Set<string>();
+    const headingStarts = new Set<string>();
+    const bodyStarts = new Set<string>();
+    const geometry = new Set<string>();
+    let hasHeading9AndBody11 = false;
+    let knownNineElevenSeed = -1;
+    for (let seed = 0; seed < 500; seed++) {
+      const result = calculateLayout({ ...DEFAULT_SETTINGS, columns: 4, rows: 5, layout: "free", seed }, sample, measure);
+      const heading = result.blocks.find((block) => block.role === "heading");
+      if (heading) {
+        starts.add(`h:${heading.col}:${heading.row}`);
+        headingStarts.add(`${heading.col}:${heading.row}`);
+      }
+      for (const body of result.blocks.filter((block) => block.role === "body")) {
+        starts.add(`b:${body.col}:${body.row}`);
+        bodyStarts.add(`${body.col}:${body.row}`);
+      }
+      if (heading?.col === 0 && heading.row === 2 && result.blocks.some((block) => block.role === "body" && block.col === 2 && block.row === 2)) {
+        hasHeading9AndBody11 = true;
+        if (knownNineElevenSeed === -1) knownNineElevenSeed = seed;
+      }
+      geometry.add(result.blocks.map((block) => `${block.role}:${block.col},${block.row},${block.colSpan},${block.rowSpan}`).join("|"));
+    }
+    expect(hasHeading9AndBody11).toBe(true); // currently covered by seed 314
+    expect(knownNineElevenSeed).toBe(314);
+    expect(headingStarts.size).toBe(20);
+    expect(bodyStarts.size).toBe(20);
+    expect(starts.size).toBeGreaterThan(35);
+    expect(geometry.size).toBeGreaterThan(30);
+  });
+  it("keeps title placement independent of generated grid dimensions", () => {
+    let hasLeft = false;
+    let hasRight = false;
+    for (let seed = 0; seed < 1000; seed++) {
+      const settings = randomizeSettings(DEFAULT_SETTINGS, seed);
+      if (settings.columns < 6) continue;
+      const heading = calculateLayout(settings, sample, measure).blocks[0];
+      hasLeft ||= heading?.col === 0;
+      hasRight ||= heading?.col === settings.columns - 1;
+    }
+    expect(hasLeft).toBe(true);
+    expect(hasRight).toBe(true);
+  });
+  it("places 1-based heading cell 9 and body cell 11 together for seed 314", () => {
+    const result = calculateLayout(
+      { ...DEFAULT_SETTINGS, columns: 4, rows: 5, layout: "free", seed: 314 },
+      sample,
+      measure,
+    );
+    expect(result.blocks.some((block) => block.role === "heading" && block.col === 0 && block.row === 2)).toBe(true);
+    expect(result.blocks.some((block) => block.role === "body" && block.col === 2 && block.row === 2)).toBe(true);
   });
 });

@@ -42,6 +42,40 @@ describe("SVG export", () => {
 describe("offline HTML package", () => {
   afterEach(() => vi.unstubAllGlobals());
 
+  it("preserves intentionally overlapping 1px leading in SVG and HTML", async () => {
+    const dense = {
+      ...settings,
+      page: { ...settings.page, width: 320, height: 320 },
+      lineHeight: 1,
+      density: 0.25,
+    };
+    const result = calculateLayout(dense, "Typography and rhythm", (value, size) => ({
+      width: value.length * size * 0.45,
+      ascent: size * 0.8,
+      descent: size * 0.2,
+    }));
+    const body = result.blocks.find((block) => block.role === "body")!;
+    expect(body.lines.length).toBeGreaterThan(2);
+    expect(body.lines[1]!.y - body.lines[0]!.y).toBe(1);
+    expect(body.lineHeight).toBeLessThan(body.fontSize);
+    vi.stubGlobal("fetch", vi.fn(async (path: string) => {
+      if (path.endsWith(".css"))
+        return new Response("@font-face { font-family: 'Inter'; font-weight: 100 900; src: url(/fonts/google/inter/inter-0.woff2); }");
+      return new Response(path.endsWith(".woff2") ? new Uint8Array([1, 2, 3]) : "SIL Open Font License 1.1");
+    }));
+    const svg = exportSvg(dense, result, getFont("inter"));
+    const zip = unzipSync(new Uint8Array(await (await exportHtmlPackage(dense, result, getFont("inter"))).arrayBuffer()));
+    const html = strFromU8(zip["index.html"]!);
+    const css = strFromU8(zip["styles.css"]!);
+    for (const line of body.lines.slice(0, 3)) {
+      expect(svg).toContain(`y="${Number(line.y.toFixed(3))}"`);
+      expect(html).toContain(`--line-y:${Number((line.y - body.y).toFixed(3))}px`);
+    }
+    expect(html).toContain("--line-height:1px");
+    expect(css).toContain("line-height:var(--line-height)");
+    expect(JSON.parse(strFromU8(zip["settings.json"]!)).lineHeight).toBe(1);
+  });
+
   it("copies CSS-referenced WOFF2 files at their preserved paths and writes real notices", async () => {
     const css =
       "@font-face { font-family: 'Inter'; font-weight: 100 900; src: url(/fonts/google/inter/inter-0.woff2) format('woff2'); }";

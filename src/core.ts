@@ -68,6 +68,62 @@ export function pageSize(page: Settings["page"]): {
   };
 }
 
+/** Small deterministic generator: never reads prior randomized settings. */
+function seeded(seed: number): () => number {
+  let state = seed >>> 0;
+  return () => {
+    state = (state + 0x6d2b79f5) | 0;
+    let value = Math.imul(state ^ (state >>> 15), 1 | state);
+    value = (value + Math.imul(value ^ (value >>> 7), 61 | value)) ^ value;
+    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+  };
+}
+function integer(random: () => number, min: number, max: number): number {
+  return min + Math.floor(random() * (max - min + 1));
+}
+
+/** Creates a fresh free composition while preserving the visual identity fields. */
+export function randomizeSettings(base: Settings, seed: number): Settings {
+  if (!Number.isInteger(seed) || Math.abs(seed) > 2147483647)
+    throw new Error("구성 seed는 -2,147,483,647~2,147,483,647 정수여야 합니다.");
+  const errors = validateSettings(base);
+  if (errors.length) throw new Error(errors.join(" "));
+  const random = seeded(seed);
+  const page = pageSize(base.page);
+  const columns = integer(random, 1, Math.max(1, Math.min(12, Math.floor(page.width / 110))));
+  const rows = integer(random, 1, Math.max(1, Math.min(12, Math.floor(page.height / 90))));
+  // Keep enough room for real glyphs even on dense, small-page compositions.
+  const horizontalBudget = Math.max(0, page.width - columns * 72);
+  const verticalBudget = Math.max(0, page.height - rows * 56);
+  const gutter = {
+    x: Math.floor(random() * Math.min(32, horizontalBudget / Math.max(1, columns - 1) / 2)),
+    y: Math.floor(random() * Math.min(32, verticalBudget / Math.max(1, rows - 1) / 2)),
+  };
+  const margin = {
+    top: Math.floor(random() * Math.min(page.height * 0.12, verticalBudget / 3)),
+    right: Math.floor(random() * Math.min(page.width * 0.12, horizontalBudget / 3)),
+    bottom: Math.floor(random() * Math.min(page.height * 0.12, verticalBudget / 3)),
+    left: Math.floor(random() * Math.min(page.width * 0.12, horizontalBudget / 3)),
+  };
+  const font = FONTS.find((item) => item.id === base.fontId)!;
+  const fontSize = integer(random, 12, Math.min(48, Math.max(12, Math.floor(Math.min(page.width / columns, page.height / rows) * 0.32))));
+  const lineHeight = Math.max(1, Math.min(160, Math.round(fontSize * (0.8 + random() * 0.9))));
+  return {
+    ...base,
+    columns,
+    rows,
+    margin,
+    gutter,
+    fontWeight: font.weights[integer(random, 0, font.weights.length - 1)]!,
+    fontSize,
+    lineHeight,
+    letterSpacing: Math.round((-1 + random() * 5) * 10) / 10,
+    density: Math.round((0.35 + random() * 0.65) * 100) / 100,
+    layout: "free",
+    seed,
+  };
+}
+
 export function validateSettings(value: unknown): string[] {
   if (!record(value)) return ["설정은 객체여야 합니다."];
   const s = value;
@@ -170,8 +226,8 @@ export function validateSettings(value: unknown): string[] {
     errors.push("선택한 폰트가 지원하는 글자 굵기를 선택하세요.");
   if (!finite(s.fontSize) || s.fontSize < 6 || s.fontSize > 120)
     errors.push("글자 크기는 6~120px 범위여야 합니다.");
-  if (!finite(s.lineHeight) || s.lineHeight < 8 || s.lineHeight > 160)
-    errors.push("행간은 8~160px 범위여야 합니다.");
+  if (!finite(s.lineHeight) || s.lineHeight < 1 || s.lineHeight > 160)
+    errors.push("행간은 1~160px 범위여야 합니다.");
   if (!finite(s.letterSpacing) || s.letterSpacing < -2 || s.letterSpacing > 10)
     errors.push("자간은 -2~10px 범위여야 합니다.");
   if (
@@ -190,7 +246,7 @@ export function validateSettings(value: unknown): string[] {
     s.textOpacity > 1
   )
     errors.push("불투명도는 0에서 1 사이여야 합니다.");
-  if (!["aligned", "asymmetric", "editorial"].includes(s.layout as string))
+  if (!["aligned", "asymmetric", "editorial", "free"].includes(s.layout as string))
     errors.push("알 수 없는 배치 방식입니다.");
   if (!finite(s.density) || s.density < 0.15 || s.density > 1)
     errors.push("문단 밀도는 15~100% 범위여야 합니다.");
@@ -279,8 +335,67 @@ type Span = {
   rowSpan: number;
   role: "heading" | "body";
 };
+function freeSpans(s: Settings): Span[] {
+  const { columns: c, rows: r } = s;
+  // Placement has its own stream so changing randomized dimensions cannot
+  // correlate a title's start with the number of preceding parameter draws.
+  const random = seeded((s.seed ^ 0x9e3779b9) | 0);
+  const occupied = new Set<string>();
+  const canPlace = (col: number, row: number, colSpan: number, rowSpan: number) => {
+    if (col + colSpan > c || row + rowSpan > r) return false;
+    for (let y = row; y < row + rowSpan; y++)
+      for (let x = col; x < col + colSpan; x++)
+        if (occupied.has(`${x}:${y}`)) return false;
+    return true;
+  };
+  const place = (col: number, row: number, colSpan: number, rowSpan: number, role: Span["role"]) => {
+    for (let y = row; y < row + rowSpan; y++)
+      for (let x = col; x < col + colSpan; x++) occupied.add(`${x}:${y}`);
+    return { col, row, colSpan, rowSpan, role };
+  };
+  // A title's start is sampled directly, rather than from a fixed template.
+  const headingCol = integer(random, 0, c - 1);
+  const headingRow = integer(random, 0, r - 1);
+  let headingWidth = integer(random, 1, c - headingCol);
+  let headingHeight = integer(random, 1, r - headingRow);
+  if (c * r > 1 && headingWidth * headingHeight === c * r) {
+    if (headingWidth > 1) headingWidth = 1;
+    else headingHeight = 1;
+  }
+  const heading = place(headingCol, headingRow, headingWidth, headingHeight, "heading");
+  const result: Span[] = [heading];
+  const cells = Array.from({ length: c * r }, (_, index) => index);
+  for (let index = cells.length - 1; index > 0; index--) {
+    const other = integer(random, 0, index);
+    [cells[index], cells[other]] = [cells[other]!, cells[index]!];
+  }
+  const target = Math.max(1, Math.floor(c * r * (0.35 + random() * 0.45)) - occupied.size);
+  let bodyCells = 0;
+  for (const cell of cells) {
+    if (bodyCells >= target) break;
+    const col = cell % c;
+    const row = Math.floor(cell / c);
+    if (occupied.has(`${col}:${row}`)) continue;
+    let colSpan = integer(random, 1, c - col);
+    let rowSpan = integer(random, 1, r - row);
+    while (!canPlace(col, row, colSpan, rowSpan) && (colSpan > 1 || rowSpan > 1)) {
+      if (colSpan > 1 && (rowSpan === 1 || random() < 0.5)) colSpan--;
+      else rowSpan--;
+    }
+    if (!canPlace(col, row, colSpan, rowSpan)) continue;
+    result.push(place(col, row, colSpan, rowSpan, "body"));
+    bodyCells += colSpan * rowSpan;
+  }
+  // A one-cell title is the only unavoidable body-less grid.
+  if (c * r > 1 && result.length === 1) {
+    const cell = cells.find((item) => !occupied.has(`${item % c}:${Math.floor(item / c)}`));
+    if (cell !== undefined) result.push(place(cell % c, Math.floor(cell / c), 1, 1, "body"));
+  }
+  return result;
+}
 function spansFor(s: Settings): Span[] {
   const { columns: c, rows: r } = s;
+  if (s.layout === "free") return freeSpans(s);
   if (r === 1)
     return [{ col: 0, row: 0, colSpan: c, rowSpan: 1, role: "heading" }];
   if (c === 1)
@@ -452,20 +567,13 @@ export function calculateLayout(
   safeSpans(spans, settings.columns, settings.rows);
   const source = words(sample);
   const glyph = measure("ÄÖÜäöüßHgjpq", settings.fontSize);
-  if (settings.lineHeight < glyph.ascent + glyph.descent)
-    return {
-      width,
-      height,
-      moduleWidth,
-      moduleHeight,
-      blocks: [],
-      warnings: [
-        "행간이 실제 글리프 높이보다 작아 겹침을 방지하기 위해 텍스트 배치를 중단했습니다.",
-      ],
-    };
   let flow: Flow = { word: 0, offset: 0 };
   const warnings: string[] = [];
+  if (settings.lineHeight < glyph.ascent + glyph.descent)
+    warnings.push("행간이 실제 글리프 높이보다 작아 줄이 겹칠 수 있습니다.");
   const blocks: TextBlock[] = [];
+  let remainingLineBudget = 10000;
+  let reportedLineBudget = false;
   for (const [index, span] of spans.entries()) {
     const x =
       settings.margin.left + span.col * (moduleWidth + settings.gutter.x);
@@ -483,16 +591,12 @@ export function calculateLayout(
         span.role === "heading" ? 24 : settings.fontSize,
       ),
     );
-    const lineHeight =
-      span.role === "heading"
-        ? Math.max(settings.lineHeight * factor, fontSize * 1.1)
-        : settings.lineHeight;
+    const lineHeight = span.role === "heading" ? settings.lineHeight * factor : settings.lineHeight;
     const metric = measure("ÄÖÜäöüßHgjpq", fontSize);
     if (lineHeight < metric.ascent + metric.descent) {
       warnings.push(
         `${index + 1}번 영역의 행간이 실제 글리프 높이보다 작습니다.`,
       );
-      continue;
     }
     const first = settings.baseline
       ? settings.margin.top +
@@ -507,13 +611,20 @@ export function calculateLayout(
       );
       continue;
     }
+    const requestedLines = span.role === "heading"
+      ? Math.min(3, available)
+      : Math.max(1, Math.floor(available * settings.density));
+    const maxLines = Math.min(requestedLines, remainingLineBudget);
+    if (requestedLines > remainingLineBudget && !reportedLineBudget) {
+      warnings.push("전체 텍스트 행 수를 성능 보호를 위해 10,000행으로 제한했습니다.");
+      reportedLineBudget = true;
+    }
+    if (maxLines < 1) continue;
     const result = wrap(
       source,
       flow,
       blockWidth,
-      span.role === "heading"
-        ? Math.min(3, available)
-        : Math.max(1, Math.floor(available * settings.density)),
+      maxLines,
       fontSize,
       measure,
     );
@@ -523,6 +634,7 @@ export function calculateLayout(
       );
       continue;
     }
+    remainingLineBudget -= result.lines.length;
     flow = result.flow;
     const lines: TextLine[] = result.lines.map((text, line) => ({
       text,
@@ -551,5 +663,5 @@ export function calculateLayout(
   return { width, height, moduleWidth, moduleHeight, blocks, warnings };
 }
 function sFactor(layout: Settings["layout"]): number {
-  return layout === "editorial" ? 4 : layout === "aligned" ? 3 : 2.5;
+  return layout === "editorial" ? 4 : layout === "aligned" ? 3 : layout === "free" ? 1.5 : 2.5;
 }

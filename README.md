@@ -4,6 +4,8 @@
 
 [grid-system.pages.dev — 바로 사용하기](https://grid-system.pages.dev/) · [검증 기록](VERIFICATION.md)
 
+현재 버전 **1.1.0** · English / 한국어
+
 ![20분할 편집 화면](docs/screenshots/grid-system-desktop.png)
 
 Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮깁니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
@@ -17,12 +19,18 @@ Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로
 - 제공받은 독일어 발췌문을 반복해 문단을 구성하고, 그리드의 모듈과 베이스라인에 맞춘 배치를 미리 봅니다.
 - Figma의 실제 Frame preset에서 확인한 Phone, Tablet, Desktop 규격을 제공하고, 기본 프레임은 Desktop 1440×1024입니다.
 - 12종 서체와 60개 작업판 프리셋을 검색하고 선택할 수 있습니다. ISO B와 JIS B, 국내 국절과 완성 판형을 구분합니다.
+- 상단 **Random layout**은 시드로 컬럼·행·네 방향 여백·가로/세로 거터·글자 크기와 굵기·자간·행간·문단 채우기 양을 함께 생성합니다. 작업판과 서체, 색상은 유지합니다.
+- 자유 배치는 제목·본문의 시작 셀과 모듈 결합을 그리드 전체에서 탐색합니다. 제목보다 위에 본문을 두거나 가운데·하단에서 시작할 수 있습니다.
+- 행간을 최소 1px까지 줄여 글리프가 겹치는 실험도 표시·내보내기합니다. 겹침 경고가 나와도 배치를 숨기지 않습니다.
+- UI는 영어가 기본이며 한국어로 전환할 수 있습니다. 지정된 독일어 샘플 원문은 언어 전환과 관계없이 보존됩니다.
 
 ## 사용 흐름
 
 1. 작업판 프리셋을 고르거나 프레임 크기를 정합니다.
-2. 컬럼·행·여백·거터를 조절하며 계산된 그리드와 텍스트 배치를 확인합니다.
+2. 컬럼·행·여백·거터를 직접 조절하거나 상단 **Random layout**으로 새로운 구성을 탐색합니다. **Seed → Apply seed**로 같은 작업판·서체에서 결과를 재현할 수 있습니다.
 3. 필요한 형식으로 내보내어 다른 디자인·개발 작업에 활용합니다.
+
+시드는 랜덤 생성의 출발점입니다. 생성 후 수치를 직접 수정한 최종 결과를 그대로 보관하려면 설정 JSON을 사용하세요. 자유 배치의 그리드 영역끼리는 겹치지 않지만, 짧은 행간에서 텍스트 줄끼리 겹치는 것은 의도적으로 허용합니다. 큰 작업판의 극단적인 밀도에서는 성능 보호를 위해 전체 텍스트를 최대 10,000행으로 제한하고 안내합니다.
 
 ## 내보내기
 
@@ -37,7 +45,7 @@ SVG, HTML/CSS ZIP, 설정 JSON을 내려받습니다. Figma 네이티브 Layout 
 <details>
 <summary>화면 예시 보기</summary>
 
-**A4 · Libre Baskerville · 모듈을 결합한 두 단 구성**
+**A4 · Libre Baskerville · 자유 배치 · Seed 149**
 
 ![A4 인쇄용 구성](docs/screenshots/grid-system-print.png)
 
@@ -87,7 +95,7 @@ npm test
 npm run test:e2e
 ```
 
-브라우저 테스트는 로컬 Chrome을 사용합니다. 20/32분할 전환, 12종 폰트, 프리셋과 실제 인쇄 치수, 잘못된 수치·JSON, 폰트 로딩 실패·재시도, 좁은 화면, 오프라인 HTML/CSS 파일을 확인합니다. 실제 결과는 [VERIFICATION.md](VERIFICATION.md)에 기록합니다.
+브라우저 테스트는 로컬 Chrome을 사용합니다. 20/32분할 전환, 12종 폰트, 프리셋과 실제 인쇄 치수, 잘못된 수치·JSON, 폰트 로딩 실패·재시도, 좁은 화면, 오프라인 HTML/CSS 파일에 더해 언어 전환, 시드 재현, 자유 배치, 겹치는 행간 출력을 확인합니다. 실제 결과는 [VERIFICATION.md](VERIFICATION.md)에 기록합니다.
 
 배포된 앱에 같은 테스트를 실행하려면:
 
@@ -96,7 +104,7 @@ $env:GRID_SYSTEM_BASE_URL = 'https://grid-system.pages.dev'
 npm run test:e2e
 ```
 
-README의 이미지는 배포된 앱에서 직접 캡처했습니다. `node scripts/capture-readme.mjs`로 같은 화면을 다시 생성할 수 있습니다.
+README의 이미지는 실제 앱에서 직접 캡처했습니다. `node scripts/capture-readme.mjs`로 배포된 버전의 같은 화면을 다시 생성할 수 있습니다.
 
 ## 글꼴, SVG, 라이선스
 
@@ -112,6 +120,7 @@ README의 이미지는 배포된 앱에서 직접 캡처했습니다. `node scri
 ## 참고
 
 - [PLAN.md](PLAN.md): 제품 및 구현 계획
+- [CHANGELOG.md](CHANGELOG.md): 버전별 변경 사항
 - [PRESETS.md](PRESETS.md): 프레임과 그리드 preset 근거
 - [FONTS.md](FONTS.md): 글꼴 추가 및 고지 기준
 - [Cloudflare Pages Create project API](https://developers.cloudflare.com/api/resources/pages/subresources/projects/methods/create/)

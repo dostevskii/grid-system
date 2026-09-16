@@ -19,7 +19,8 @@ const errors = [];
 page.on('pageerror', (error) => errors.push(error.message));
 
 async function ready() {
-  await expect(page.getByTestId('layout-status')).toHaveText('브라우저에 자동 저장됨');
+  await expect(page.getByTestId('layout-status')).toHaveAttribute('data-ready', 'true');
+  await expect(page.getByTestId('layout-status')).toHaveText('Saved locally in this browser');
   await page.evaluate(() => document.fonts.ready);
 }
 
@@ -36,28 +37,31 @@ async function capture(name) {
 try {
   await page.goto('/');
   await ready();
-  await expect(page.getByTestId('artboard')).toHaveAttribute('aria-label', '4열 5행, Inter 문단 레이아웃');
+  await expect(page.getByTestId('language-select')).toHaveValue('en');
   await capture('grid-system-desktop');
 
-  await page.getByRole('button', { name: '작업판 프리셋 선택' }).click();
-  await page.getByRole('dialog').getByRole('button', { name: '인쇄', exact: true }).click();
-  await page.getByRole('textbox', { name: '프리셋 검색' }).fill('A4');
+  await page.getByRole('button', { name: /artboard preset/i }).click();
+  await page.getByRole('dialog').getByRole('button', { name: 'Print', exact: true }).click();
+  await page.getByRole('textbox', { name: /search presets/i }).fill('A4');
   await page.getByRole('dialog').getByRole('button', { name: /^A4 / }).click();
   await ready();
-  await page.getByRole('button', { name: '알림 닫기', exact: true }).click();
-  await page.getByRole('button', { name: '폰트 선택', exact: true }).click();
+  const closeNotice = page.getByRole('button', { name: 'Dismiss notice', exact: true });
+  if (await closeNotice.count()) await closeNotice.click();
+  await page.getByRole('button', { name: /font/i }).click();
   await page.getByRole('dialog').getByRole('button', { name: /^Libre Baskerville/ }).click();
   await ready();
-  await page.getByRole('button', { name: '다른 구성', exact: true }).click();
+  await page.getByTestId('seed-input').fill('149');
+  await page.getByTestId('apply-seed').click();
   await ready();
-  await page.getByRole('button', { name: '작업판 프리셋 선택' }).scrollIntoViewIfNeeded();
+  if (await closeNotice.count()) await closeNotice.click();
+  await page.getByRole('button', { name: /artboard preset/i }).scrollIntoViewIfNeeded();
   await expect(page.locator('.artboard svg')).toHaveAttribute('width', '210mm');
   await expect(page.locator('.artboard svg')).toHaveAttribute('height', '297mm');
   await capture('grid-system-print');
 
-  await page.getByRole('button', { name: '내보내기', exact: true }).click();
+  await page.getByRole('button', { name: 'Export', exact: true }).click();
   await expect(page.getByRole('dialog')).toBeVisible();
-  await expect(page.getByRole('dialog').getByRole('button', { name: /Figma에서 열기/ })).toBeEnabled();
+  await expect(page.getByRole('dialog').getByRole('button', { name: /Figma/i })).toBeEnabled();
   await capture('grid-system-export');
 
   if (errors.length) throw new Error(`Browser errors: ${errors.join('; ')}`);

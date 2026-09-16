@@ -2,6 +2,12 @@ import { test, expect } from "@playwright/test";
 import { readFile } from "node:fs/promises";
 import { unzipSync, strFromU8 } from "fflate";
 
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript(() =>
+    localStorage.setItem("grid-system.language", "ko"),
+  );
+});
+
 test("default layout, controls and every font load without browser errors", async ({
   page,
 }, testInfo) => {
@@ -23,7 +29,7 @@ test("default layout, controls and every font load without browser errors", asyn
     path: testInfo.outputPath("desktop.png"),
     fullPage: true,
   });
-  await page.getByRole("button", { name: "32분할" }).click();
+  await page.getByRole("button", { name: /^32\s?분할$/ }).click();
   await expect(page.getByTestId("artboard")).toHaveAttribute(
     "aria-label",
     "4열 8행, Inter 문단 레이아웃",
@@ -67,7 +73,7 @@ test("default layout, controls and every font load without browser errors", asyn
     .getByRole("spinbutton", { name: "Columns", exact: true })
     .fill("0");
   await expect(page.locator(".error-message")).toBeVisible();
-  await page.getByRole("button", { name: "20분할" }).click();
+  await page.getByRole("button", { name: /^20\s?분할$/ }).click();
   await expect(page.getByTestId("layout-status")).toHaveText(
     "브라우저에 자동 저장됨",
   );

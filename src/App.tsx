@@ -14,9 +14,11 @@ import {
   fromPx,
   pageSize,
   parseSettings,
+  randomizeSettings,
   toPx,
   validateSettings,
 } from "./core";
+import { LANGUAGE_STORAGE_KEY, t, translateMessage, translatePreset, type Locale } from "./i18n";
 import { applyPreset, getPreset, PRESETS } from "./presets";
 import { exportHtmlPackage, exportSvg, serializeSettings } from "./export";
 import { FONTS, getFont, loadFont, makeMeasurer, nearestWeight } from "./fonts";
@@ -199,7 +201,7 @@ function RangeField({
       />
       <input
         type="range"
-        aria-label={`${label} 슬라이더`}
+        aria-label={`${label} slider`}
         min={min}
         max={max}
         step={step}
@@ -220,11 +222,13 @@ function Dialog({
   children,
   close,
   wide = false,
+  closeLabel,
 }: {
   title: string;
   children: ReactNode;
   close: () => void;
   wide?: boolean;
+  closeLabel?: string;
 }) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
@@ -252,7 +256,7 @@ function Dialog({
     >
       <div className="dialog-head">
         <h2 id={titleId}>{title}</h2>
-        <button className="icon-button" aria-label="닫기" onClick={close}>
+        <button className="icon-button" aria-label={closeLabel ?? "Close"} onClick={close}>
           <Icon name="close" />
         </button>
       </div>
@@ -287,13 +291,20 @@ interface ReadyLayout {
 export default function App() {
   const [initial] = useState(readInitial);
   const [settings, setSettings] = useState(initial.settings);
+  const [locale, setLocale] = useState<Locale>(() => {
+    try { return localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en"; }
+    catch { return "en"; }
+  });
+  const [seedDraft, setSeedDraft] = useState(String(initial.settings.seed));
+  const isSeedValid = seedDraft.trim() !== "" &&
+    Number.isInteger(Number(seedDraft)) && Math.abs(Number(seedDraft)) <= 2147483647;
   const [ready, setReady] = useState<ReadyLayout | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
   );
   const [failure, setFailure] = useState("");
   const [retry, setRetry] = useState(0);
-  const [notice, setNotice] = useState(initial.message);
+  const [notice, setNotice] = useState(() => translateMessage(locale, initial.message));
   const [invalidFields, setInvalidFields] = useState<Record<string, boolean>>(
     {},
   );
@@ -306,8 +317,11 @@ export default function App() {
     settings.page.mode === "web" ? "px" : "mm",
   );
   const [typeUnit, setTypeUnit] = useState<"px" | "pt">("px");
-  const [linkedMargins, setLinkedMargins] = useState(true);
-  const [linkedGutters, setLinkedGutters] = useState(true);
+  const [linkedMargins, setLinkedMargins] = useState(() => {
+    const margin = initial.settings.margin;
+    return margin.top === margin.right && margin.top === margin.bottom && margin.top === margin.left;
+  });
+  const [linkedGutters, setLinkedGutters] = useState(() => initial.settings.gutter.x === initial.settings.gutter.y);
   const [mobilePanel, setMobilePanel] = useState(false);
   const [zoom, setZoom] = useState<number | "fit">("fit");
   const [viewport, setViewport] = useState({ width: 1000, height: 750 });
@@ -317,8 +331,13 @@ export default function App() {
   const errors = useMemo(() => validateSettings(settings), [settings]);
   const hasDraftError = Object.values(invalidFields).some(Boolean);
   const font = getFont(settings.fontId);
+  const tr = (key: string) => t(locale, key);
   const dimensions = pageSize(settings.page);
   const currentPreset = getPreset(settings.page.presetId);
+  const matchesPreset = (preset: (typeof PRESETS)[number]) =>
+    preset.mode === presetMode &&
+    `${preset.name} ${translatePreset(locale, preset.name)} ${preset.width} ${preset.height} ${preset.category} ${translatePreset(locale, preset.category)}`
+      .toLowerCase().includes(query.trim().toLowerCase());
   const invalidChanged = useCallback(
     (id: string, invalid: boolean) =>
       setInvalidFields((current) => {
@@ -336,7 +355,7 @@ export default function App() {
   useEffect(() => {
     if (errors.length) {
       setStatus("error");
-      setFailure(errors[0]);
+      setFailure(translateMessage(locale, errors[0]));
       return;
     }
     let cancelled = false;
@@ -359,7 +378,7 @@ export default function App() {
           localStorage.setItem(STORAGE_KEY, serializeSettings(settings));
         } catch {
           setNotice(
-            "브라우저 저장 공간을 사용할 수 없습니다. 설정 JSON으로 저장하세요.",
+            tr("storageUnavailable"),
           );
         }
       } catch (error) {
@@ -367,8 +386,8 @@ export default function App() {
           setStatus("error");
           setFailure(
             error instanceof Error
-              ? error.message
-              : "폰트 또는 레이아웃을 불러오지 못했습니다. 다시 시도하세요.",
+              ? translateMessage(locale, error.message)
+              : "The font or layout could not be loaded. Try again.",
           );
         }
       }
@@ -377,7 +396,15 @@ export default function App() {
       cancelled = true;
       window.clearTimeout(timer);
     };
-  }, [settings, retry, errors]);
+  }, [settings, retry, errors, locale]);
+
+  useEffect(() => {
+    try { localStorage.setItem(LANGUAGE_STORAGE_KEY, locale); } catch { /* Locale is optional browser preference. */ }
+    document.documentElement.lang = locale;
+    document.title = locale === "ko" ? "Grid System — 그리드에서 시작하는 레이아웃" : "Grid System — Layout experiments from a grid";
+  }, [locale]);
+
+  useEffect(() => setSeedDraft(String(settings.seed)), [settings.seed]);
 
   useEffect(() => {
     const element = viewportRef.current;
@@ -412,8 +439,13 @@ export default function App() {
       )
     : 1;
   const scale = zoom === "fit" ? fit : zoom;
-  const canExport =
-    status === "ready" && !!ready && !hasDraftError && !exporting;
+  const isReadyForSettings = status === "ready" && !!ready && ready.settings === settings;
+  const canExport = isReadyForSettings && !hasDraftError && !exporting;
+  const displayWarning = useMemo(() => {
+    const warnings = ready?.layout.warnings ?? [];
+    const cap = warnings.find((warning) => warning.includes("10,000"));
+    return translateMessage(locale, cap ?? warnings[0] ?? "");
+  }, [ready, locale]);
   const openPicker = (kind: "presets" | "fonts") => {
     setQuery("");
     setPresetMode(settings.page.mode);
@@ -446,9 +478,7 @@ export default function App() {
     setInputUnit(preset.mode === "web" ? "px" : "mm");
     setZoom("fit");
     setDialog(null);
-    setNotice(
-      `${preset.name} 규격을 적용했습니다. 그리드와 타이포그래피 설정은 유지됩니다.`,
-    );
+    setNotice(`${translatePreset(locale, preset.name)} ${tr("presetApplied")}`);
   }
 
   async function download(kind: "svg" | "html" | "json") {
@@ -474,13 +504,13 @@ export default function App() {
       anchor.remove();
       window.setTimeout(() => URL.revokeObjectURL(url), 30_000);
       setNotice(
-        "다운로드를 준비했습니다. 브라우저의 다운로드 목록을 확인하세요.",
+        tr("downloaded"),
       );
     } catch (error) {
       setNotice(
         error instanceof Error
-          ? `내보내기 실패: ${error.message}`
-          : "내보내기에 실패했습니다. 다시 시도하세요.",
+          ? `${tr("exportFailed")}: ${translateMessage(locale, error.message)}`
+          : `${tr("exportFailed")}.`,
       );
     } finally {
       setExporting("");
@@ -489,6 +519,33 @@ export default function App() {
 
   const numberProps = { invalidChanged };
   const typeFactor = typeUnit === "pt" ? 0.75 : 1;
+
+  function applySeed() {
+    if (!isSeedValid) return;
+    const seed = Number(seedDraft);
+    try {
+      const base = errors.length && ready ? ready.settings : settings;
+      setSettings(randomizeSettings(base, seed));
+      setLinkedMargins(false);
+      setLinkedGutters(false);
+      setInvalidFields({});
+      setSeedDraft(String(seed));
+      setZoom("fit");
+      setNotice(locale === "ko" ? "랜덤 레이아웃을 적용했습니다." : "Random layout applied.");
+    } catch (error) {
+      setNotice(translateMessage(locale, error instanceof Error ? error.message : ""));
+    }
+  }
+
+  function freshSeed() {
+    const values = new Int32Array(1);
+    crypto.getRandomValues(values);
+    const sampled = values[0] === -2147483648 ? -2147483647 : values[0];
+    const next = sampled === settings.seed ? (sampled === 2147483647 ? sampled - 1 : sampled + 1) : sampled;
+    setSeedDraft(String(next));
+    try { setSettings(randomizeSettings(errors.length && ready ? ready.settings : settings, next)); setLinkedMargins(false); setLinkedGutters(false); setInvalidFields({}); setZoom("fit"); setNotice(locale === "ko" ? "랜덤 레이아웃을 적용했습니다." : "Random layout applied."); }
+    catch (error) { setNotice(translateMessage(locale, error instanceof Error ? error.message : "")); }
+  }
 
   return (
     <div className={`app-shell ${mobilePanel ? "panel-open" : ""}`}>
@@ -500,7 +557,7 @@ export default function App() {
             event.preventDefault();
             setDialog("about");
           }}
-          aria-label="Grid System 소개"
+          aria-label={tr("about")}
         >
           <span className="brand-mark" aria-hidden="true">
             {Array.from({ length: 12 }, (_, i) => (
@@ -508,10 +565,10 @@ export default function App() {
             ))}
           </span>
           <span>
-            Grid System<span className="version">1.0</span>
+            Grid System<span className="version">1.1.0</span>
           </span>
         </a>
-        <div className="header-presets" aria-label="그리드 분할 프리셋">
+        <div className="header-presets" aria-label={tr("gridSettings")}>
           <button
             className={
               settings.columns === 4 && settings.rows === 5 ? "active" : ""
@@ -520,7 +577,7 @@ export default function App() {
               setSettings((current) => ({ ...current, columns: 4, rows: 5 }))
             }
           >
-            20분할<span>4 × 5</span>
+            {locale === "ko" ? "20분할" : "20 modules"}<span aria-hidden="true">4 × 5</span>
           </button>
           <button
             className={
@@ -530,36 +587,55 @@ export default function App() {
               setSettings((current) => ({ ...current, columns: 4, rows: 8 }))
             }
           >
-            32분할<span>4 × 8</span>
+            {locale === "ko" ? "32분할" : "32 modules"}<span aria-hidden="true">4 × 8</span>
+          </button>
+        </div>
+        <div className="random-controls">
+          <button className="secondary-button random-button" data-testid="randomize-layout" onClick={freshSeed}>
+            <Icon name="refresh" size={16} /><span>{tr("randomLayout")}</span>
+          </button>
+          <label className="seed-control">
+            <span>{tr("seed")}</span>
+            <input data-testid="seed-input" type="number" min={-2147483647} max={2147483647} step={1} value={seedDraft}
+              aria-label={tr("seed")} aria-invalid={!isSeedValid}
+              title={translateMessage(locale, "구성 seed는 -2,147,483,647~2,147,483,647 정수여야 합니다.")}
+              onChange={(event) => setSeedDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") applySeed(); }} />
+          </label>
+          <button className="secondary-button seed-apply" data-testid="apply-seed" aria-label={locale === "ko" ? "시드 적용" : "Apply seed"} onClick={applySeed} disabled={!isSeedValid}>
+            <Icon name="check" size={15} /><span>{tr("apply")}</span>
           </button>
         </div>
         <div className="header-actions">
+          <label className="visually-hidden" htmlFor="language-select">{tr("language")}</label>
+          <select id="language-select" className="language-select" data-testid="language-select" value={locale} onChange={(event) => setLocale(event.target.value as Locale)} aria-label={tr("language")}>
+            <option value="en">English</option><option value="ko">한국어</option>
+          </select>
           <button
             className="quiet-button principle-button"
             onClick={() => setDialog("about")}
           >
             <Icon name="book" />
-            <span>그리드 원리</span>
+            <span>{tr("gridPrinciples")}</span>
           </button>
           <button
             className="icon-button import-button"
-            title="설정 JSON 불러오기"
-            aria-label="설정 JSON 불러오기"
+            title={tr("importJson")}
+            aria-label={tr("importJson")}
             onClick={() => importRef.current?.click()}
           >
             <Icon name="upload" />
           </button>
           <button
             className="primary-button"
-            aria-label="내보내기"
+            aria-label={tr("export")}
             onClick={() => setDialog("export")}
           >
             <Icon name="download" />
-            <span>내보내기</span>
+            <span>{tr("export")}</span>
           </button>
           <button
             className="icon-button mobile-settings"
-            aria-label="속성 패널 열기"
+            aria-label={tr("openProperties")}
             aria-expanded={mobilePanel}
             onClick={() => setMobilePanel(!mobilePanel)}
           >
@@ -569,21 +645,19 @@ export default function App() {
       </header>
 
       <main className="editor">
-        <section className="workspace" aria-label="레이아웃 미리보기">
+        <section className="workspace" aria-label={tr("layoutPreview")}>
           <div className="workspace-toolbar">
             <div className="document-heading">
               <span className="document-dot" />
-              <strong>{currentPreset?.name ?? "Custom"}</strong>
+              <strong>{currentPreset ? translatePreset(locale, currentPreset.name) : tr("custom")}</strong>
               <span>
                 {format(dimensions.width)} × {format(dimensions.height)} px
               </span>
             </div>
-            <div className="view-switch" aria-label="미리보기 표시">
+            <div className="view-switch" aria-label={tr("previewDisplay")}>
               {(
                 [
-                  ["overlay", "그리드 + 텍스트"],
-                  ["text", "텍스트"],
-                  ["grid", "그리드"],
+                  ["overlay", tr("overlay")], ["text", tr("text")], ["grid", tr("grid")],
                 ] as const
               ).map(([key, name]) => (
                 <button
@@ -619,7 +693,7 @@ export default function App() {
                 >
                   <div className="artboard-label">
                     <span>
-                      {ready.settings.columns * ready.settings.rows} fields
+                      {ready.settings.columns * ready.settings.rows} {tr("fields")}
                     </span>
                     <span>{ready.font.name}</span>
                   </div>
@@ -641,7 +715,7 @@ export default function App() {
                     className="artboard"
                     data-testid="artboard"
                     role="img"
-                    aria-label={`${ready.settings.columns}열 ${ready.settings.rows}행, ${ready.font.name} 문단 레이아웃`}
+                    aria-label={locale === "ko" ? `${ready.settings.columns}열 ${ready.settings.rows}행, ${ready.font.name} 문단 레이아웃` : `${ready.settings.columns} columns × ${ready.settings.rows} rows, ${ready.font.name} paragraph layout`}
                     dangerouslySetInnerHTML={{ __html: svg }}
                   />
                   <span className="canvas-corner" aria-hidden="true" />
@@ -649,13 +723,13 @@ export default function App() {
               ) : (
                 <div className="loading-canvas">
                   <Icon name="grid" size={36} />
-                  <p>{failure || "그리드와 폰트를 준비하고 있습니다."}</p>
+                  <p>{failure || tr("loading")}</p>
                   {failure && (
                     <button
                       className="secondary-button"
                       onClick={() => setRetry((v) => v + 1)}
                     >
-                      다시 시도
+                      {tr("retry")}
                     </button>
                   )}
                 </div>
@@ -671,14 +745,14 @@ export default function App() {
             >
               <span>
                 {hasDraftError
-                  ? "입력값의 범위를 확인하세요. 마지막으로 완성된 미리보기를 표시합니다."
+                  ? tr("invalidDraft")
                   : failure
-                    ? `${failure} ${ready ? "마지막 유효한 미리보기를 표시합니다." : ""}`
-                    : ready?.layout.warnings[0]}
+                    ? `${failure} ${ready ? tr("lastPreview") : ""}`
+                    : displayWarning}
               </span>
               {failure && !errors.length && (
                 <button onClick={() => setRetry((v) => v + 1)}>
-                  다시 시도
+                  {tr("retry")}
                 </button>
               )}
               {errors.some((error) => error.includes("작업 영역")) && (
@@ -697,7 +771,7 @@ export default function App() {
                     }));
                   }}
                 >
-                  여백·간격 맞추기
+                  {tr("fitMargins")}
                 </button>
               )}
             </div>
@@ -708,10 +782,10 @@ export default function App() {
               <strong>
                 {settings.columns} × {settings.rows}
                 <span className="equals">=</span>
-                {settings.columns * settings.rows}분할
+                {settings.columns * settings.rows} {tr("modules")}
               </strong>
               <span className="module-dimensions">
-                모듈{" "}
+                {tr("module")} {" "}
                 {ready
                   ? `${format(ready.layout.moduleWidth)} × ${format(ready.layout.moduleHeight)} px`
                   : "—"}
@@ -720,14 +794,14 @@ export default function App() {
             <div className="zoom-controls">
               <button
                 className="icon-button"
-                title="화면에 맞춤"
-                aria-label="화면에 맞춤"
+                title={tr("fit")}
+                aria-label={tr("fit")}
                 onClick={() => setZoom("fit")}
               >
                 <Icon name="expand" size={16} />
               </button>
               <select
-                aria-label="미리보기 배율"
+                aria-label={tr("previewZoom")}
                 value={zoom}
                 onChange={(event) =>
                   setZoom(
@@ -737,7 +811,7 @@ export default function App() {
                   )
                 }
               >
-                <option value="fit">맞춤 {format(scale * 100, 0)}%</option>
+                <option value="fit">{tr("fit")} {format(scale * 100, 0)}%</option>
                 {[0.25, 0.5, 0.75, 1, 1.5, 2].map((value) => (
                   <option key={value} value={value}>
                     {value * 100}%
@@ -751,24 +825,24 @@ export default function App() {
         {mobilePanel && (
           <button
             className="panel-scrim"
-            aria-label="속성 패널 닫기"
+            aria-label={tr("closeProperties")}
             onClick={() => setMobilePanel(false)}
           />
         )}
-        <aside className="inspector" aria-label="레이아웃 속성">
+        <aside className="inspector" aria-label={tr("properties")}>
           <div className="inspector-heading">
-            <h1>레이아웃 설정</h1>
+            <h1>{tr("properties")}</h1>
             <button
               className="icon-button reset-button"
-              aria-label="설정 초기화"
-              title="설정 초기화"
+              aria-label={tr("resetSettings")}
+              title={tr("resetSettings")}
               onClick={() => setDialog("reset")}
             >
               <Icon name="refresh" size={16} />
             </button>
             <button
               className="icon-button mobile-panel-close"
-              aria-label="속성 패널 닫기"
+              aria-label={tr("closeProperties")}
               onClick={() => setMobilePanel(false)}
             >
               <Icon name="close" />
@@ -777,7 +851,7 @@ export default function App() {
           <div className="inspector-scroll">
             <section className="control-section">
               <div className="section-heading">
-                <h2>작업판</h2>
+                <h2>{tr("artboard")}</h2>
                 <div className="mini-segment">
                   {(["web", "print"] as const).map((mode) => (
                     <button
@@ -789,7 +863,7 @@ export default function App() {
                         setDialog("presets");
                       }}
                     >
-                      {mode === "web" ? "웹" : "인쇄"}
+                      {tr(mode)}
                     </button>
                   ))}
                 </div>
@@ -797,22 +871,22 @@ export default function App() {
               <button
                 className="picker-button"
                 onClick={() => openPicker("presets")}
-                aria-label="작업판 프리셋 선택"
+                aria-label={tr("chooseArtboard")}
               >
                 <Icon name="file" size={16} />
                 <span>
-                  {currentPreset?.name ?? "Custom"}
+                  {currentPreset ? translatePreset(locale, currentPreset.name) : tr("custom")}
                   <small>
                     {settings.page.mode === "web"
                       ? "Figma Frame"
-                      : settings.page.category}
+                      : translatePreset(locale, settings.page.category)}
                   </small>
                 </span>
                 <Icon name="chevron" size={16} />
               </button>
               <div className="dimension-row">
                 <NumberField
-                  label="폭"
+                  label={tr("width")}
                   value={fromPx(dimensions.width, inputUnit)}
                   onChange={(value) => setPageDimension("width", value)}
                   unit={inputUnit}
@@ -822,8 +896,8 @@ export default function App() {
                 />
                 <button
                   className="icon-button swap-button"
-                  aria-label="가로·세로 방향 전환"
-                  title="가로·세로 방향 전환"
+                  aria-label={tr("swapOrientation")}
+                  title={tr("swapOrientation")}
                   onClick={() => {
                     change("page", {
                       ...settings.page,
@@ -840,7 +914,7 @@ export default function App() {
                   <Icon name="swap" size={16} />
                 </button>
                 <NumberField
-                  label="높이"
+                  label={tr("height")}
                   value={fromPx(dimensions.height, inputUnit)}
                   onChange={(value) => setPageDimension("height", value)}
                   unit={inputUnit}
@@ -853,11 +927,11 @@ export default function App() {
                 <span>
                   {settings.page.mode === "print"
                     ? `${format(fromPx(dimensions.width, "mm"))} × ${format(fromPx(dimensions.height, "mm"))} mm${settings.page.unit === "in" ? ` / ${format(settings.page.width)} × ${format(settings.page.height)} in` : ""}`
-                    : "작업판 높이는 자유롭게 늘릴 수 있습니다."}
+                    : tr("webHeightHint")}
                 </span>
                 {settings.page.mode === "print" && (
                   <select
-                    aria-label="길이 입력 단위"
+                    aria-label={tr("lengthUnit")}
                     value={inputUnit}
                     onChange={(event) =>
                       setInputUnit(event.target.value as "px" | "mm")
@@ -872,11 +946,11 @@ export default function App() {
 
             <section className="control-section">
               <div className="section-heading">
-                <h2>그리드</h2>
+                <h2>{tr("gridSettings")}</h2>
                 <span className="count-badge">
                   {settings.columns === 4 && [5, 8].includes(settings.rows)
-                    ? `${settings.columns * settings.rows}분할`
-                    : "Custom"}
+                    ? `${settings.columns * settings.rows} ${tr("modules")}`
+                    : tr("custom")}
                 </span>
               </div>
               <div className="two-columns">
@@ -901,7 +975,7 @@ export default function App() {
                 <span>Margin</span>
                 <button
                   className={`link-button ${linkedMargins ? "linked" : ""}`}
-                  aria-label="여백 연결"
+                  aria-label={tr("linkMargins")}
                   aria-pressed={linkedMargins}
                   onClick={() => {
                     setLinkedMargins(!linkedMargins);
@@ -915,21 +989,18 @@ export default function App() {
                   }}
                 >
                   <Icon name="link" size={13} />
-                  {linkedMargins ? "연결됨" : "개별"}
+                  {linkedMargins ? tr("linked") : tr("individual")}
                 </button>
               </div>
               <div className="four-columns">
                 {(
                   [
-                    ["top", "위"],
-                    ["right", "오른쪽"],
-                    ["bottom", "아래"],
-                    ["left", "왼쪽"],
+                    ["top", tr("topMargin")], ["right", tr("rightMargin")], ["bottom", tr("bottomMargin")], ["left", tr("leftMargin")],
                   ] as const
                 ).map(([key, label]) => (
                   <NumberField
                     key={key}
-                    label={`${label} 여백`}
+                    label={label}
                     value={fromPx(settings.margin[key], inputUnit)}
                     unit={inputUnit}
                     onChange={(value) => setMargin(key, value)}
@@ -943,7 +1014,7 @@ export default function App() {
                 <span>Gutter</span>
                 <button
                   className={`link-button ${linkedGutters ? "linked" : ""}`}
-                  aria-label="간격 연결"
+                  aria-label={tr("linkGutters")}
                   aria-pressed={linkedGutters}
                   onClick={() => {
                     setLinkedGutters(!linkedGutters);
@@ -955,14 +1026,13 @@ export default function App() {
                   }}
                 >
                   <Icon name="link" size={13} />
-                  {linkedGutters ? "연결됨" : "개별"}
+                  {linkedGutters ? tr("linked") : tr("individual")}
                 </button>
               </div>
               <div className="two-columns">
                 {(
                   [
-                    ["x", "가로 간격"],
-                    ["y", "세로 간격"],
+                    ["x", tr("horizontalGutter")], ["y", tr("verticalGutter")],
                   ] as const
                 ).map(([key, label]) => (
                   <NumberField
@@ -991,16 +1061,16 @@ export default function App() {
                   checked={settings.baseline}
                   onChange={(event) => change("baseline", event.target.checked)}
                 />
-                <span>베이스라인 가이드</span>
+                <span>{tr("baseline")}</span>
                 <span className="subtle">{format(settings.lineHeight)} px</span>
               </label>
             </section>
 
             <section className="control-section">
               <div className="section-heading">
-                <h2>타이포그래피</h2>
+                <h2>{tr("typography")}</h2>
                 <select
-                  aria-label="타이포그래피 입력 단위"
+                  aria-label={tr("typeUnit")}
                   className="unit-select"
                   value={typeUnit}
                   onChange={(event) =>
@@ -1014,18 +1084,18 @@ export default function App() {
               <button
                 className="picker-button font-picker"
                 onClick={() => openPicker("fonts")}
-                aria-label="폰트 선택"
+                aria-label={tr("chooseFont")}
               >
                 <span className="font-symbol">Aa</span>
                 <span>
                   {font.name}
-                  <small>{font.category}</small>
+                  <small>{locale === "en" && font.category === "한국어" ? "Korean" : font.category}</small>
                 </span>
                 <Icon name="chevron" size={16} />
               </button>
               <div className="two-columns">
                 <NumberField
-                  label="글자 크기"
+                  label={tr("fontSize")}
                   value={settings.fontSize * typeFactor}
                   onChange={(value) => change("fontSize", value / typeFactor)}
                   unit={typeUnit}
@@ -1035,9 +1105,9 @@ export default function App() {
                   {...numberProps}
                 />
                 <label className="select-field">
-                  <span className="field-label">굵기</span>
+                  <span className="field-label">{tr("fontWeight")}</span>
                   <select
-                    aria-label="폰트 굵기"
+                    aria-label={tr("fontWeight")}
                     value={settings.fontWeight}
                     onChange={(event) =>
                       change("fontWeight", Number(event.target.value))
@@ -1059,7 +1129,7 @@ export default function App() {
                 </label>
               </div>
               <RangeField
-                label="자간"
+                label={tr("letterSpacing")}
                 value={settings.letterSpacing}
                 onChange={(value) => change("letterSpacing", value)}
                 min={-2}
@@ -1069,10 +1139,10 @@ export default function App() {
                 {...numberProps}
               />
               <RangeField
-                label="행간"
+                label={tr("lineHeight")}
                 value={settings.lineHeight * typeFactor}
                 onChange={(value) => change("lineHeight", value / typeFactor)}
-                min={8 * typeFactor}
+                min={1 * typeFactor}
                 max={160 * typeFactor}
                 step={0.5}
                 unit={typeUnit}
@@ -1082,19 +1152,19 @@ export default function App() {
 
             <section className="control-section">
               <div className="section-heading">
-                <h2>색상</h2>
+                <h2>{tr("colors")}</h2>
               </div>
               {(["grid", "text"] as const).map((kind) => (
                 <div className="color-row" key={kind}>
                   <label className="color-label">
-                    <span>{kind === "grid" ? "그리드" : "텍스트"}</span>
+                    <span>{kind === "grid" ? tr("grid") : tr("text")}</span>
                     <span
                       className="color-swatch"
                       style={{ background: settings[`${kind}Color`] }}
                     >
                       <input
                         type="color"
-                        aria-label={`${kind === "grid" ? "그리드" : "텍스트"} 색상`}
+                        aria-label={kind === "grid" ? tr("gridColor") : tr("textColor")}
                         value={settings[`${kind}Color`]}
                         onChange={(event) =>
                           change(`${kind}Color`, event.target.value)
@@ -1106,7 +1176,7 @@ export default function App() {
                     </span>
                   </label>
                   <NumberField
-                    label={`${kind === "grid" ? "그리드" : "텍스트"} 불투명도`}
+                    label={`${kind === "grid" ? tr("grid") : tr("text")} ${tr("opacity")}`}
                     value={settings[`${kind}Opacity`] * 100}
                     onChange={(value) => change(`${kind}Opacity`, value / 100)}
                     unit="%"
@@ -1120,21 +1190,12 @@ export default function App() {
 
             <section className="control-section composition-section">
               <div className="section-heading">
-                <h2>문단 배치</h2>
-                <button
-                  className="text-button"
-                  onClick={() => change("seed", (settings.seed + 1) % 100000)}
-                >
-                  <Icon name="refresh" size={13} />
-                  다른 구성
-                </button>
+                <h2>{tr("composition")}</h2>
               </div>
               <div className="layout-choices">
                 {(
                   [
-                    ["aligned", "정렬형"],
-                    ["asymmetric", "비대칭형"],
-                    ["editorial", "제목 강조형"],
+                    ["aligned", tr("aligned")], ["asymmetric", tr("asymmetric")], ["editorial", tr("editorial")], ["free", tr("free")],
                   ] as const
                 ).map(([key, name]) => (
                   <button
@@ -1153,7 +1214,7 @@ export default function App() {
                 ))}
               </div>
               <RangeField
-                label="문단 채우기"
+                label={tr("paragraphFill")}
                 value={Math.round(settings.density * 100)}
                 onChange={(value) => change("density", value / 100)}
                 min={15}
@@ -1163,23 +1224,18 @@ export default function App() {
                 {...numberProps}
               />
               <p className="section-note">
-                같은 그리드, 서로 다른 가능성.
-                <br />
-                원문의 문장이 모듈에 맞춰 이어집니다.
+                {tr("compositionNote")}
+                <br />{tr("leadingHint")}
               </p>
             </section>
             <div className="inspector-end">
               <span
-                className={`status-dot ${status === "ready" ? "ready" : ""}`}
+                className={`status-dot ${isReadyForSettings ? "ready" : ""}`}
               />
-              <span role="status" data-testid="layout-status">
-                {status === "loading"
-                  ? "폰트·문단 계산 중"
-                  : status === "ready"
-                    ? "브라우저에 자동 저장됨"
-                    : "설정을 확인하세요"}
+              <span role="status" data-testid="layout-status" data-ready={isReadyForSettings ? "true" : "false"}>
+                {status === "error" ? tr("checkSettings") : !isReadyForSettings ? tr("calculating") : tr("saved")}
               </span>
-              <span>로컬 저장</span>
+              <span>{tr("localSave")}</span>
             </div>
           </div>
         </aside>
@@ -1190,21 +1246,25 @@ export default function App() {
         type="file"
         accept="application/json,.json"
         className="visually-hidden"
-        aria-label="설정 JSON 파일"
+        aria-label={tr("settingsFile")}
         onChange={async (event) => {
           const file = event.target.files?.[0];
           if (!file) return;
           try {
             if (file.size > 250_000)
-              throw new Error("설정 파일은 250 KB 이하여야 합니다.");
+              throw new Error(locale === "ko" ? "설정 파일은 250 KB 이하여야 합니다." : "The settings file must be 250 KB or smaller.");
             const imported = parseSettings(await file.text());
             setSettings(imported);
+            setLinkedMargins(imported.margin.top === imported.margin.right && imported.margin.top === imported.margin.bottom && imported.margin.top === imported.margin.left);
+            setLinkedGutters(imported.gutter.x === imported.gutter.y);
             setInputUnit(imported.page.mode === "web" ? "px" : "mm");
             setZoom("fit");
-            setNotice("설정을 불러왔습니다.");
+            setInvalidFields({});
+            setSeedDraft(String(imported.seed));
+            setNotice(tr("imported"));
           } catch (error) {
             setNotice(
-              `불러오기 실패: ${error instanceof Error ? error.message : "올바른 설정 JSON인지 확인하세요."}`,
+              `${tr("importFailed")}: ${translateMessage(locale, error instanceof Error ? error.message : "Check that this is valid settings JSON.")}`,
             );
           }
           event.target.value = "";
@@ -1216,7 +1276,7 @@ export default function App() {
           <span>{notice}</span>
           <button
             className="icon-button"
-            aria-label="알림 닫기"
+            aria-label={tr("dismissNotice")}
             onClick={() => setNotice("")}
           >
             <Icon name="close" size={16} />
@@ -1225,7 +1285,7 @@ export default function App() {
       )}
 
       {dialog === "presets" && (
-        <Dialog title="작업판 프리셋" close={() => setDialog(null)} wide>
+        <Dialog title={tr("artboardPresets")} close={() => setDialog(null)} closeLabel={tr("close")} wide>
           <div className="dialog-toolbar">
             <div className="mini-segment">
               {(["web", "print"] as const).map((mode) => (
@@ -1234,17 +1294,17 @@ export default function App() {
                   className={presetMode === mode ? "selected" : ""}
                   onClick={() => setPresetMode(mode)}
                 >
-                  {mode === "web" ? "웹 · Figma" : "인쇄"}
+                  {mode === "web" ? tr("categoryWeb") : tr("print")}
                 </button>
               ))}
             </div>
             <label className="search-input">
               <Icon name="search" size={16} />
               <input
-                aria-label="프리셋 검색"
+                aria-label={tr("presetSearch")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="이름 또는 규격 검색"
+                placeholder={tr("searchPreset")}
               />
             </label>
           </div>
@@ -1258,23 +1318,19 @@ export default function App() {
             ).map((category) => {
               const presets = PRESETS.filter(
                 (preset) =>
-                  preset.mode === presetMode &&
-                  preset.category === category &&
-                  `${preset.name} ${preset.width} ${preset.height} ${category}`
-                    .toLowerCase()
-                    .includes(query.toLowerCase()),
+                  preset.category === category && matchesPreset(preset),
               );
               return (
                 !!presets.length && (
                   <section className="picker-group" key={category}>
-                    <h3>{category}</h3>
+                    <h3>{translatePreset(locale, category)}</h3>
                     {presets.map((preset) => (
                       <button
                         className="picker-item"
                         key={preset.presetId}
                         onClick={() => choosePreset(preset)}
                       >
-                        <span>{preset.name}</span>
+                        <span>{translatePreset(locale, preset.name)}</span>
                         <span className="preset-measure">
                           {preset.width} × {preset.height} {preset.unit}
                         </span>
@@ -1287,48 +1343,41 @@ export default function App() {
                 )
               );
             })}
-            {!PRESETS.some(
-              (preset) =>
-                preset.mode === presetMode &&
-                `${preset.name} ${preset.width} ${preset.height} ${preset.category}`
-                  .toLowerCase()
-                  .includes(query.toLowerCase()),
-            ) && (
+            {!PRESETS.some(matchesPreset) && (
               <p className="empty-state">
-                일치하는 규격이 없습니다. 작업판의 폭과 높이를 직접 입력할 수도
-                있습니다.
+                {tr("noPresets")}
               </p>
             )}
           </div>
           <p className="dialog-footnote">
             {presetMode === "web"
-              ? "Figma Frame 프리셋 기준. 높이는 웹페이지의 제한이 아닌 시작값입니다."
-              : "ISO B와 JIS B, 국내 국절과 완성 판형을 구분합니다. 인쇄소의 재단 규격은 별도로 확인하세요."}
+              ? tr("webFootnote") : tr("printFootnote")}
           </p>
         </Dialog>
       )}
 
       {dialog === "fonts" && (
-        <Dialog title="폰트 선택" close={() => setDialog(null)}>
+        <Dialog title={tr("fontPicker")} close={() => setDialog(null)} closeLabel={tr("close")}>
           <div className="dialog-toolbar">
             <label className="search-input">
               <Icon name="search" size={16} />
               <input
-                aria-label="폰트 검색"
+                aria-label={tr("fontSearch")}
                 value={query}
                 onChange={(event) => setQuery(event.target.value)}
-                placeholder="12종의 서체에서 찾아보세요"
+                placeholder={tr("searchFont")}
               />
             </label>
           </div>
           <div className="picker-list">
             {(["Sans-serif", "Serif", "한국어"] as const).map((category) => (
               <section className="picker-group" key={category}>
-                <h3>{category}</h3>
+                <h3>{locale === "en" && category === "한국어" ? "Korean" : category}</h3>
                 {FONTS.filter(
                   (item) =>
                     item.category === category &&
-                    item.name.toLowerCase().includes(query.toLowerCase()),
+                    `${item.name} ${item.category} ${item.category === "한국어" ? "Korean" : ""}`
+                      .toLowerCase().includes(query.trim().toLowerCase()),
                 ).map((item) => (
                   <button
                     className="picker-item font-item"
@@ -1355,25 +1404,25 @@ export default function App() {
             ))}
           </div>
           <p className="dialog-footnote">
-            서체 선택 후 실제 글자 폭으로 문단을 다시 배치합니다. 원문은 그대로
-            유지됩니다.
+            {tr("fontFootnote")}
           </p>
         </Dialog>
       )}
 
       {dialog === "export" && (
         <Dialog
-          title="레이아웃 내보내기"
+          title={tr("exportLayout")}
+          closeLabel={tr("close")}
           close={() => !exporting && setDialog(null)}
         >
           <p className="dialog-description">
-            지금의 그리드를 다음 작업으로 가져가세요.
+            {tr("exportIntro")}
           </p>
           <div className="export-summary">
             <Icon name="grid" size={22} />
             <span>
               <strong>
-                {settings.columns} × {settings.rows} 그리드
+                {settings.columns} × {settings.rows} {tr("grid")}
               </strong>
               <small>
                 {format(dimensions.width)} × {format(dimensions.height)} px ·{" "}
@@ -1382,10 +1431,9 @@ export default function App() {
             </span>
             <span className="count-badge">
               {settings.view === "overlay"
-                ? "그리드 + 텍스트"
+                ? tr("overlay")
                 : settings.view === "grid"
-                  ? "그리드만"
-                  : "텍스트만"}
+                  ? tr("gridOnly") : tr("textOnly")}
             </span>
           </div>
           <div className="export-options">
@@ -1394,20 +1442,17 @@ export default function App() {
                 [
                   "svg",
                   "SVG",
-                  "Figma에서 열기",
-                  "편집 가능한 벡터와 텍스트. 같은 폰트가 필요합니다.",
+                  tr("openInFigma"), tr("svgDescription"),
                 ],
                 [
                   "html",
                   "HTML / CSS",
-                  "웹 개발에 사용하기",
-                  "반응형 스타일, 폰트, 출처 고지를 담은 ZIP.",
+                  tr("useOnWeb"), tr("htmlDescription"),
                 ],
                 [
                   "json",
-                  "설정 JSON",
-                  "나중에 이어서 편집하기",
-                  "모든 수치와 구성 정보를 저장하고 다시 불러옵니다.",
+                  locale === "ko" ? "설정 JSON" : "Settings JSON",
+                  tr("editLater"), tr("jsonDescription"),
                 ],
               ] as const
             ).map(([kind, name, title, description]) => (
@@ -1418,7 +1463,7 @@ export default function App() {
                 onClick={() => download(kind)}
               >
                 <span className="export-format">
-                  {exporting === kind ? "준비 중" : name}
+                  {exporting === kind ? tr("preparing") : name}
                 </span>
                 <span>
                   <strong>{title}</strong>
@@ -1437,20 +1482,20 @@ export default function App() {
               }}
             >
               <Icon name="upload" size={15} />
-              설정 JSON 불러오기
+              {tr("importSettings")}
             </button>
           </div>
           <p className="dialog-footnote">
-            {status !== "ready" || hasDraftError
-              ? "유효한 설정과 폰트 준비가 완료되면 내보낼 수 있습니다."
-              : "현재 보기 모드가 출력에 적용됩니다. SVG는 Figma의 네이티브 Layout Guide와는 별개입니다."}
+            {!isReadyForSettings || hasDraftError
+              ? tr("exportUnavailable") : tr("exportFootnote")}
           </p>
         </Dialog>
       )}
 
       {dialog === "about" && (
         <Dialog
-          title="질서 안에서 발견하는 가능성"
+          title={tr("aboutTitle")}
+          closeLabel={tr("close")}
           close={() => setDialog(null)}
           wide
         >
@@ -1460,74 +1505,49 @@ export default function App() {
                 <i key={i} />
               ))}
             </div>
-            <p className="about-lead">
-              그리드는 답이 아니라,
-              <br />더 좋은 질문을 위한 시작점입니다.
+          <p className="about-lead">
+              {tr("aboutLead")}
             </p>
-            <p>
-              Grid System은 Josef Müller-Brockmann의 『Grid systems in graphic
-              design』에서 출발한 레이아웃 실험 도구입니다. 책의 도판을
-              복제하기보다, 정렬·비례·여백·위계의 원칙을 오늘의 화면과 인쇄물에
-              적용합니다.
-            </p>
+            <p>{locale === "ko" ? "Grid System은 Josef Müller-Brockmann의 『Grid systems in graphic design』에서 출발한 레이아웃 실험 도구입니다. 책의 도판을 복제하기보다, 정렬·비례·여백·위계의 원칙을 오늘의 화면과 인쇄물에 적용합니다." : "Grid System is a layout-exploration tool inspired by Josef Müller-Brockmann’s Grid systems in graphic design. Rather than reproducing its plates, it applies principles of alignment, proportion, whitespace, and hierarchy to today’s screens and print."}</p>
             <div className="principles">
               <div>
-                <h3>모듈과 결합</h3>
-                <p>
-                  20분할은 4열 × 5행, 32분할은 4열 × 8행입니다. 여러 모듈을 합쳐
-                  제목과 문단에 서로 다른 비중을 줍니다.
-                </p>
+                <h3>{tr("modulesPrinciple")}</h3>
+                <p>{locale === "ko" ? "20분할은 4열 × 5행, 32분할은 4열 × 8행입니다. 여러 모듈을 합쳐 제목과 문단에 서로 다른 비중을 줍니다." : "20 modules use 4 columns × 5 rows; 32 modules use 4 columns × 8 rows. Combine modules to give headings and paragraphs different weight."}</p>
               </div>
               <div>
-                <h3>행과 리듬</h3>
-                <p>
-                  서체, 글자 크기와 행간을 기준으로 온전한 행을 배치합니다.
-                  입력한 치수를 임의로 바꾸지 않고 잔여 공간을 여백으로
-                  남깁니다.
-                </p>
+                <h3>{tr("rhythmPrinciple")}</h3>
+                <p>{locale === "ko" ? "서체, 글자 크기와 행간을 기준으로 온전한 행을 배치합니다. 입력한 치수를 임의로 바꾸지 않고 잔여 공간을 여백으로 남깁니다." : "Complete lines are placed from the typeface, size, and line height. Remaining space stays as whitespace without changing your dimensions."}</p>
               </div>
               <div>
-                <h3>의도적인 여백</h3>
-                <p>
-                  모든 칸을 채울 필요는 없습니다. 빈 모듈과 비대칭 구성도 내용을
-                  읽는 순서를 만드는 요소입니다.
-                </p>
+                <h3>{tr("whitespacePrinciple")}</h3>
+                <p>{locale === "ko" ? "모든 칸을 채울 필요는 없습니다. 빈 모듈과 비대칭 구성도 내용을 읽는 순서를 만드는 요소입니다." : "Not every cell needs filling. Empty modules and asymmetric compositions also guide reading order."}</p>
               </div>
             </div>
-            <p className="about-reference">
-              참고: Josef Müller-Brockmann, Grid systems in graphic design,
-              Niggli. 본 도구는 독립적인 해석이며 공식 제휴 제품이 아닙니다.
-              예시 문장은 사용자가 제공한 독일어 원문을 반복합니다.
-            </p>
-            <p className="about-reference">
-              파일과 설정은 브라우저에서 처리합니다. 계정이나 업로드 서버를
-              사용하지 않습니다. 내보낸 SVG의 텍스트는 가져오는 프로그램과
-              설치된 폰트에 따라 표시가 달라질 수 있습니다.
-            </p>
+            <p className="about-reference">{locale === "ko" ? "참고: Josef Müller-Brockmann, Grid systems in graphic design, Niggli. 본 도구는 독립적인 해석이며 공식 제휴 제품이 아닙니다. 예시 문장은 사용자가 제공한 독일어 원문을 반복합니다." : "Reference: Josef Müller-Brockmann, Grid systems in graphic design, Niggli. This is an independent interpretation, not an official affiliate product. The supplied German sample text is repeated unchanged."}</p>
+            <p className="about-reference">{locale === "ko" ? "파일과 설정은 브라우저에서 처리합니다. 계정이나 업로드 서버를 사용하지 않습니다. 내보낸 SVG의 텍스트는 가져오는 프로그램과 설치된 폰트에 따라 표시가 달라질 수 있습니다." : "Files and settings are processed in your browser. No account or upload server is used. Exported SVG text can render differently depending on the importing program and installed fonts."}</p>
             <a
               className="text-link"
               href="/font-notices/README.md"
               target="_blank"
               rel="noreferrer"
             >
-              폰트 출처와 사용 안내
+              {tr("fontNotices")}
             </a>
           </div>
         </Dialog>
       )}
 
       {dialog === "reset" && (
-        <Dialog title="기본 설정으로 돌아갈까요?" close={() => setDialog(null)}>
+        <Dialog title={tr("resetTitle")} close={() => setDialog(null)} closeLabel={tr("close")}>
           <p className="dialog-description">
-            1440 × 1024 작업판, 20분할, Inter로 돌아갑니다. 현재 설정을
-            보관하려면 먼저 JSON으로 내보내세요.
+            {tr("resetDescription")}
           </p>
           <div className="dialog-buttons">
             <button
               className="secondary-button"
               onClick={() => setDialog(null)}
             >
-              취소
+              {tr("cancel")}
             </button>
             <button
               className="primary-button"
@@ -1537,12 +1557,14 @@ export default function App() {
                 setTypeUnit("px");
                 setLinkedMargins(true);
                 setLinkedGutters(true);
+                setInvalidFields({});
+                setSeedDraft(String(DEFAULT_SETTINGS.seed));
                 setZoom("fit");
                 setDialog(null);
-                setNotice("기본 설정으로 초기화했습니다.");
+                setNotice(tr("resetComplete"));
               }}
             >
-              초기화
+              {tr("reset")}
             </button>
           </div>
         </Dialog>

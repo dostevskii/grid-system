@@ -1,6 +1,6 @@
 export type PageUnit = "px" | "mm" | "in";
 export type ViewMode = "overlay" | "grid" | "text";
-export type LayoutStyle = "aligned" | "asymmetric" | "editorial";
+export type LayoutStyle = "aligned" | "asymmetric" | "editorial" | "free";
 
 export interface PageSpec {
   presetId: string;
