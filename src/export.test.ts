@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { calculateLayout, DEFAULT_SETTINGS } from "./core";
 import { exportHtmlPackage, exportSvg } from "./export";
 import { getFont } from "./fonts";
+import type { LayoutResult } from "./model";
 
 const settings = {
   ...DEFAULT_SETTINGS,
@@ -22,6 +23,39 @@ const layout = calculateLayout(
   }),
 );
 
+const withPlaceholders = (base: LayoutResult): LayoutResult =>
+  ({
+    ...base,
+    images: [
+      {
+        id: "image-16-9",
+        role: "image",
+        col: 0,
+        row: 0,
+        colSpan: 2,
+        rowSpan: 1,
+        x: 44,
+        y: 32,
+        width: 160,
+        height: 90,
+        ratio: "16:9",
+      },
+      {
+        id: "image-1-1",
+        role: "image",
+        col: 0,
+        row: 1,
+        colSpan: 1,
+        rowSpan: 1,
+        x: 34,
+        y: 180,
+        width: 80,
+        height: 80,
+        ratio: "1:1",
+      },
+    ],
+  }) as LayoutResult;
+
 describe("SVG export", () => {
   it("writes a white page, filled module cells, an exact outer boundary, and baselines in grid view", () => {
     const svg = exportSvg(
@@ -36,6 +70,30 @@ describe("SVG export", () => {
     expect(svg).toContain('class="grid-boundary" fill="none"');
     expect(svg).toContain('class="baseline"');
     expect(svg).not.toContain("<text ");
+  });
+
+  it("exports neutral ratio-correct placeholder boxes instead of photographs", () => {
+    const svg = exportSvg(settings, withPlaceholders(layout), getFont("inter"));
+    expect(svg).toContain('data-image-block="image-16-9"');
+    expect(svg).toContain('data-image-ratio="16:9"');
+    expect(svg).toContain('aria-label="Image placeholder, 16:9"');
+    expect(svg).toContain('x="44" y="32" width="160" height="90"');
+    expect(svg).toContain('fill="#E4E6E8" stroke="#A1A6AB"');
+    expect(svg).toContain(">16:9</text>");
+    expect(svg).not.toMatch(/<image(?:\s|>)/);
+  });
+
+  it("omits placeholders only in grid-only view", () => {
+    const result = withPlaceholders(layout);
+    expect(exportSvg({ ...settings, view: "overlay" }, result, getFont("inter"))).toContain(
+      'data-image-block="image-1-1"',
+    );
+    expect(exportSvg({ ...settings, view: "text" }, result, getFont("inter"))).toContain(
+      'data-image-block="image-1-1"',
+    );
+    expect(exportSvg({ ...settings, view: "grid" }, result, getFont("inter"))).not.toContain(
+      "data-image-block=",
+    );
   });
 });
 
@@ -107,6 +165,30 @@ describe("offline HTML package", () => {
     );
     expect(styles).toContain("@media screen and (max-width:700px)");
     expect(styles).toContain("height:0; white-space:pre; line-height:0;");
+  });
+
+  it("keeps placeholder geometry offline without fetching image assets", async () => {
+    const fetch = vi.fn(async (path: string) => {
+      if (path.endsWith(".css"))
+        return new Response("@font-face { font-family: 'Inter'; font-weight: 100 900; src: url(/fonts/google/inter/inter-0.woff2); }");
+      if (path.endsWith(".woff2")) return new Response(new Uint8Array([1]));
+      return new Response("SIL Open Font License 1.1");
+    });
+    vi.stubGlobal("fetch", fetch);
+    const blob = await exportHtmlPackage(
+      settings,
+      withPlaceholders(layout),
+      getFont("inter"),
+    );
+    const files = unzipSync(new Uint8Array(await blob.arrayBuffer()));
+    const html = strFromU8(files["index.html"]!);
+    const styles = strFromU8(files["styles.css"]!);
+    expect(html).toContain('<figure class="image-block" data-image-block="image-16-9" data-image-ratio="16:9"');
+    expect(html).toContain("--image-x:24px;--image-y:12px;--image-width:160px;--image-height:90px;--image-aspect:16 / 9");
+    expect(html).toContain("<figcaption>16:9</figcaption>");
+    expect(styles).toContain("width:var(--image-width); height:var(--image-height)");
+    expect(styles).toContain("aspect-ratio:var(--image-aspect)");
+    expect(fetch.mock.calls.flat().join(" ")).not.toMatch(/\.(png|jpe?g|webp|gif|svg)(?:\s|$)/i);
   });
 
   it("makes SVG guides fully invisible when grid opacity is zero", () => {

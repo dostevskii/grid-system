@@ -8,13 +8,16 @@ import {
 } from "react";
 import type { CSSProperties, ReactNode } from "react";
 import type { FontDefinition, LayoutResult, PageUnit, Settings } from "./model";
+import { IMAGE_RATIOS } from "./model";
+import WorkflowBar from "./WorkflowBar";
 import {
   calculateLayout,
   DEFAULT_SETTINGS,
   fromPx,
   pageSize,
   parseSettings,
-  randomizeSettings,
+  randomizeGrid,
+  randomizeTypography,
   toPx,
   validateSettings,
 } from "./core";
@@ -297,9 +300,6 @@ export default function App() {
     try { return localStorage.getItem(LANGUAGE_STORAGE_KEY) === "ko" ? "ko" : "en"; }
     catch { return "en"; }
   });
-  const [seedDraft, setSeedDraft] = useState(String(initial.settings.seed));
-  const isSeedValid = seedDraft.trim() !== "" &&
-    Number.isInteger(Number(seedDraft)) && Math.abs(Number(seedDraft)) <= 2147483647;
   const [ready, setReady] = useState<ReadyLayout | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "error">(
     "loading",
@@ -351,7 +351,11 @@ export default function App() {
     [],
   );
   const change = <K extends keyof Settings>(key: K, value: Settings[K]) =>
-    setSettings((current) => ({ ...current, [key]: value }));
+    setSettings((current) => {
+      if (current.workflow.gridLocked && ["page", "columns", "rows", "margin", "gutter"].includes(key)) return current;
+      if (current.workflow.compositionLocked && ["fontId", "fontWeight", "fontSize", "lineHeight", "letterSpacing", "density", "seed", "layout", "baseline", "textColor", "textOpacity"].includes(key)) return current;
+      return { ...current, [key]: value };
+    });
 
   useEffect(() => {
     if (errors.length) {
@@ -404,8 +408,6 @@ export default function App() {
     document.documentElement.lang = locale;
     document.title = locale === "ko" ? "Grid System — 그리드에서 시작하는 레이아웃" : "Grid System — Layout experiments from a grid";
   }, [locale]);
-
-  useEffect(() => setSeedDraft(String(settings.seed)), [settings.seed]);
 
   useEffect(() => {
     const element = viewportRef.current;
@@ -475,6 +477,7 @@ export default function App() {
   }
 
   function choosePreset(preset: (typeof PRESETS)[number]) {
+    if (settings.workflow.gridLocked) return;
     setSettings((current) => applyPreset(current, preset));
     setInputUnit(preset.mode === "web" ? "px" : "mm");
     setZoom("fit");
@@ -520,31 +523,43 @@ export default function App() {
 
   const numberProps = { invalidChanged };
 
-  function applySeed() {
-    if (!isSeedValid) return;
-    const seed = Number(seedDraft);
+  function randomGrid(seed: number) {
+    if (settings.workflow.gridLocked) return;
     try {
       const base = errors.length && ready ? ready.settings : settings;
-      setSettings(randomizeSettings(base, seed));
-      setLinkedMargins(false);
-      setLinkedGutters(false);
+      const next = randomizeGrid(base, seed);
+      setSettings(next);
+      setLinkedMargins(next.margin.top === next.margin.right && next.margin.top === next.margin.bottom && next.margin.top === next.margin.left);
+      setLinkedGutters(next.gutter.x === next.gutter.y);
       setInvalidFields({});
-      setSeedDraft(String(seed));
       setZoom("fit");
-      setNotice(locale === "ko" ? "랜덤 레이아웃을 적용했습니다." : "Random layout applied.");
     } catch (error) {
       setNotice(translateMessage(locale, error instanceof Error ? error.message : ""));
     }
   }
 
-  function freshSeed() {
-    const values = new Int32Array(1);
-    crypto.getRandomValues(values);
-    const sampled = values[0] === -2147483648 ? -2147483647 : values[0];
-    const next = sampled === settings.seed ? (sampled === 2147483647 ? sampled - 1 : sampled + 1) : sampled;
-    setSeedDraft(String(next));
-    try { setSettings(randomizeSettings(errors.length && ready ? ready.settings : settings, next)); setLinkedMargins(false); setLinkedGutters(false); setInvalidFields({}); setZoom("fit"); setNotice(locale === "ko" ? "랜덤 레이아웃을 적용했습니다." : "Random layout applied."); }
+  function randomTypography(seed: number, mode: "typography" | "typography-image") {
+    if (!settings.workflow.gridLocked || settings.workflow.compositionLocked) return;
+    try {
+      setSettings(randomizeTypography(errors.length && ready ? ready.settings : settings, seed, mode));
+      setInvalidFields({});
+    }
     catch (error) { setNotice(translateMessage(locale, error instanceof Error ? error.message : "")); }
+  }
+
+  function toggleGridLock() {
+    if (!settings.workflow.gridLocked && (!isReadyForSettings || hasDraftError)) return;
+    const unlocking = settings.workflow.gridLocked;
+    setSettings((current) => ({ ...current, workflow: {
+      ...current.workflow, gridLocked: !current.workflow.gridLocked,
+      compositionLocked: false,
+    } }));
+    if (unlocking && settings.workflow.compositionLocked) setNotice(tr("unlockGridNotice"));
+  }
+
+  function toggleCompositionLock() {
+    if (!settings.workflow.compositionLocked && (!isReadyForSettings || hasDraftError || !settings.workflow.gridLocked || settings.workflow.mode === "empty")) return;
+    setSettings((current) => ({ ...current, workflow: { ...current.workflow, compositionLocked: !current.workflow.compositionLocked } }));
   }
 
   return (
@@ -565,11 +580,12 @@ export default function App() {
             ))}
           </span>
           <span>
-            Grid System<span className="version">1.1.1</span>
+            Grid System<span className="version">1.2.0</span>
           </span>
         </a>
         <div className="header-presets" aria-label={tr("gridSettings")}>
           <button
+            disabled={settings.workflow.gridLocked}
             className={
               settings.columns === 4 && settings.rows === 5 ? "active" : ""
             }
@@ -580,6 +596,7 @@ export default function App() {
             {locale === "ko" ? "20분할" : "20 modules"}<span aria-hidden="true">4 × 5</span>
           </button>
           <button
+            disabled={settings.workflow.gridLocked}
             className={
               settings.columns === 4 && settings.rows === 8 ? "active" : ""
             }
@@ -588,21 +605,6 @@ export default function App() {
             }
           >
             {locale === "ko" ? "32분할" : "32 modules"}<span aria-hidden="true">4 × 8</span>
-          </button>
-        </div>
-        <div className="random-controls">
-          <button className="secondary-button random-button" data-testid="randomize-layout" onClick={freshSeed}>
-            <Icon name="refresh" size={16} /><span>{tr("randomLayout")}</span>
-          </button>
-          <label className="seed-control">
-            <span>{tr("seed")}</span>
-            <input data-testid="seed-input" type="number" min={-2147483647} max={2147483647} step={1} value={seedDraft}
-              aria-label={tr("seed")} aria-invalid={!isSeedValid}
-              title={translateMessage(locale, "구성 seed는 -2,147,483,647~2,147,483,647 정수여야 합니다.")}
-              onChange={(event) => setSeedDraft(event.target.value)} onKeyDown={(event) => { if (event.key === "Enter") applySeed(); }} />
-          </label>
-          <button className="secondary-button seed-apply" data-testid="apply-seed" aria-label={locale === "ko" ? "시드 적용" : "Apply seed"} onClick={applySeed} disabled={!isSeedValid}>
-            <Icon name="check" size={15} /><span>{tr("apply")}</span>
           </button>
         </div>
         <div className="header-actions">
@@ -644,6 +646,10 @@ export default function App() {
         </div>
       </header>
 
+      <WorkflowBar settings={settings} locale={locale} ready={isReadyForSettings && !hasDraftError}
+        randomGrid={randomGrid} randomTypography={randomTypography}
+        toggleGridLock={toggleGridLock} toggleCompositionLock={toggleCompositionLock} />
+
       <main className="editor">
         <section className="workspace" aria-label={tr("layoutPreview")}>
           <div className="workspace-toolbar">
@@ -657,7 +663,7 @@ export default function App() {
             <div className="view-switch" aria-label={tr("previewDisplay")}>
               {(
                 [
-                  ["overlay", tr("overlay")], ["text", tr("text")], ["grid", tr("grid")],
+                  ["overlay", tr("overlay")], ["text", tr("content")], ["grid", tr("grid")],
                 ] as const
               ).map(([key, name]) => (
                 <button
@@ -671,6 +677,9 @@ export default function App() {
               ))}
             </div>
           </div>
+          {settings.workflow.mode === "empty" && (
+            <div className="grid-empty-hint" role="status">{tr(settings.workflow.gridLocked ? "emptyGridLocked" : "emptyGrid")}</div>
+          )}
           <div className="canvas-viewport" ref={viewportRef}>
             <div
               className="canvas-space"
@@ -849,7 +858,7 @@ export default function App() {
             </button>
           </div>
           <div className="inspector-scroll">
-            <section className="control-section">
+            <fieldset className="control-section" disabled={settings.workflow.gridLocked} aria-label={tr("artboard")}>
               <div className="section-heading">
                 <h2>{tr("artboard")}</h2>
                 <div className="mini-segment">
@@ -942,9 +951,9 @@ export default function App() {
                   </select>
                 )}
               </div>
-            </section>
+            </fieldset>
 
-            <section className="control-section">
+            <fieldset className="control-section" disabled={settings.workflow.gridLocked} aria-label={tr("gridSettings")}>
               <div className="section-heading">
                 <h2>{tr("gridSettings")}</h2>
                 <span className="count-badge">
@@ -1059,14 +1068,15 @@ export default function App() {
                 <input
                   type="checkbox"
                   checked={settings.baseline}
+                  disabled={settings.workflow.compositionLocked}
                   onChange={(event) => change("baseline", event.target.checked)}
                 />
                 <span>{tr("baseline")}</span>
                 <span className="subtle">{format(settings.lineHeight)} px</span>
               </label>
-            </section>
+            </fieldset>
 
-            <section className="control-section">
+            <fieldset className="control-section" disabled={settings.workflow.compositionLocked} aria-label={tr("typography")}>
               <div className="section-heading">
                 <h2>{tr("typography")}</h2>
               </div>
@@ -1137,14 +1147,14 @@ export default function App() {
                 unit="px"
                 {...numberProps}
               />
-            </section>
+            </fieldset>
 
             <section className="control-section">
               <div className="section-heading">
                 <h2>{tr("colors")}</h2>
               </div>
               {(["grid", "text"] as const).map((kind) => (
-                <div className="color-row" key={kind}>
+                <fieldset className="color-row" key={kind} disabled={kind === "text" && settings.workflow.compositionLocked}>
                   <label className="color-label">
                     <span>{kind === "grid" ? tr("grid") : tr("text")}</span>
                     <span
@@ -1173,15 +1183,15 @@ export default function App() {
                     max={100}
                     {...numberProps}
                   />
-                </div>
+                </fieldset>
               ))}
             </section>
 
-            <section className="control-section composition-section">
+            <fieldset className="control-section composition-section" disabled={settings.workflow.compositionLocked} aria-label={tr("composition")}>
               <div className="section-heading">
                 <h2>{tr("composition")}</h2>
               </div>
-              <div className="layout-choices">
+              {settings.workflow.mode === "legacy" ? <div className="layout-choices">
                 {(
                   [
                     ["aligned", tr("aligned")], ["asymmetric", tr("asymmetric")], ["editorial", tr("editorial")], ["free", tr("free")],
@@ -1201,7 +1211,7 @@ export default function App() {
                     <span>{name}</span>
                   </button>
                 ))}
-              </div>
+              </div> : <p className="section-note composition-mode">{tr(settings.workflow.mode === "empty" ? "emptyComposition" : settings.workflow.mode === "typography-image" ? "modeTypeImage" : "modeTypography")}</p>}
               <RangeField
                 label={tr("paragraphFill")}
                 value={Math.round(settings.density * 100)}
@@ -1212,11 +1222,30 @@ export default function App() {
                 unit="%"
                 {...numberProps}
               />
+              <div className="subsection-heading"><span>{tr("imageRatios")}</span></div>
+              <div className="image-ratios" role="group" aria-label={tr("imageRatios")}>
+                {IMAGE_RATIOS.map((ratio) => {
+                  const selected = settings.workflow.imageRatios.includes(ratio.id);
+                  return <label key={ratio.id} className={`ratio-choice ${selected ? "selected" : ""}`}>
+                    <input type="checkbox" checked={selected}
+                      data-testid={`image-ratio-${ratio.id.replace(":", "-")}`}
+                      aria-label={`${tr("imageRatio")} ${ratio.id}`}
+                      disabled={selected && settings.workflow.imageRatios.length === 1}
+                      onChange={() => setSettings((current) => current.workflow.compositionLocked ? current : ({ ...current, workflow: {
+                        ...current.workflow,
+                        imageRatios: selected ? current.workflow.imageRatios.filter((item) => item !== ratio.id) : [...current.workflow.imageRatios, ratio.id],
+                      } }))} />
+                    <span className="ratio-outline" aria-hidden="true"><i style={{ aspectRatio: `${ratio.width} / ${ratio.height}` }} /></span>
+                    <span>{ratio.id}</span>
+                  </label>;
+                })}
+              </div>
+              <p className="section-note">{tr("imageRatiosHint")}</p>
               <p className="section-note">
                 {tr("compositionNote")}
                 <br />{tr("leadingHint")}
               </p>
-            </section>
+            </fieldset>
             <div className="inspector-end">
               <span
                 className={`status-dot ${isReadyForSettings ? "ready" : ""}`}
@@ -1249,7 +1278,6 @@ export default function App() {
             setInputUnit(imported.page.mode === "web" ? "px" : "mm");
             setZoom("fit");
             setInvalidFields({});
-            setSeedDraft(String(imported.seed));
             setNotice(tr("imported"));
           } catch (error) {
             setNotice(
@@ -1372,6 +1400,7 @@ export default function App() {
                     className="picker-item font-item"
                     key={item.id}
                     onClick={() => {
+                      if (settings.workflow.compositionLocked) return;
                       setSettings((current) => ({
                         ...current,
                         fontId: item.id,
@@ -1546,7 +1575,6 @@ export default function App() {
                 setLinkedMargins(true);
                 setLinkedGutters(true);
                 setInvalidFields({});
-                setSeedDraft(String(DEFAULT_SETTINGS.seed));
                 setZoom("fit");
                 setDialog(null);
                 setNotice(tr("resetComplete"));

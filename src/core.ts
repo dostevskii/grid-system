@@ -1,10 +1,14 @@
 import { FONTS } from "./fonts";
+import { IMAGE_RATIOS } from "./model";
 import type {
   LayoutResult,
   MeasureText,
   Settings,
+  ImageBlock,
+  ImageRatioId,
   TextBlock,
   TextLine,
+  WorkflowSettings,
 } from "./model";
 
 export const DEFAULT_SETTINGS: Settings = {
@@ -36,6 +40,20 @@ export const DEFAULT_SETTINGS: Settings = {
   seed: 0,
   view: "overlay",
   baseline: false,
+  workflow: {
+    gridSeed: 0,
+    gridLocked: false,
+    compositionLocked: false,
+    mode: "legacy",
+    imageRatios: IMAGE_RATIOS.map((ratio) => ratio.id),
+  },
+};
+const DEFAULT_WORKFLOW: WorkflowSettings = {
+  gridSeed: 0,
+  gridLocked: false,
+  compositionLocked: false,
+  mode: "legacy",
+  imageRatios: IMAGE_RATIOS.map((ratio) => ratio.id),
 };
 const record = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
@@ -121,6 +139,89 @@ export function randomizeSettings(base: Settings, seed: number): Settings {
     density: Math.round((0.35 + random() * 0.65) * 100) / 100,
     layout: "free",
     seed,
+  };
+}
+
+function assertSeed(seed: number): void {
+  if (!Number.isInteger(seed) || Math.abs(seed) > 2147483647)
+    throw new Error("구성 seed는 -2,147,483,647~2,147,483,647 정수여야 합니다.");
+}
+
+/**
+ * Generates an intentionally regular grid. It never creates hairline cells or
+ * zero margins: the randomness is in a small, useful editorial range.
+ */
+export function randomizeGrid(base: Settings, seed: number): Settings {
+  assertSeed(seed);
+  if (validateSettings(base).length) throw new Error("현재 설정이 올바르지 않습니다.");
+  if (base.workflow.gridLocked) return base;
+  const random = seeded(seed);
+  const page = pageSize(base.page);
+  const landscape = page.width >= page.height;
+  const maxColumns = Math.max(2, Math.min(10, Math.floor(page.width / 132)));
+  const maxRows = Math.max(2, Math.min(10, Math.floor(page.height / 112)));
+  const columns = integer(random, Math.min(3, maxColumns), maxColumns);
+  const rows = integer(random, Math.min(3, maxRows), maxRows);
+  const short = Math.min(page.width, page.height);
+  const marginBase = Math.max(16, Math.min(short * (landscape ? 0.075 : 0.09), 112));
+  const asymmetry = (random() - 0.5) * marginBase * 0.22;
+  const margin = {
+    top: Math.round(marginBase * (0.92 + random() * 0.22)),
+    right: Math.round(marginBase + asymmetry),
+    bottom: Math.round(marginBase * (0.92 + random() * 0.22)),
+    left: Math.round(marginBase - asymmetry),
+  };
+  const gutterBase = Math.max(8, Math.min(32, short * 0.018));
+  const gutter = {
+    x: Math.round(gutterBase * (0.85 + random() * 0.35)),
+    y: Math.round(gutterBase * (0.85 + random() * 0.35)),
+  };
+  // In the unusual event a tiny manually supplied artboard cannot support
+  // these ideals, keep the generated geometry valid rather than overfitting.
+  const usableW = page.width - margin.left - margin.right - (columns - 1) * gutter.x;
+  const usableH = page.height - margin.top - margin.bottom - (rows - 1) * gutter.y;
+  if (usableW <= 0 || usableH <= 0) return { ...base, workflow: { ...base.workflow, gridSeed: seed, mode: "empty", compositionLocked: false } };
+  return {
+    ...base,
+    columns,
+    rows,
+    margin,
+    gutter,
+    workflow: { ...base.workflow, gridSeed: seed, mode: "empty", compositionLocked: false },
+  };
+}
+
+/** Randomizes typography only after the user has chosen and locked a grid. */
+export function randomizeTypography(
+  base: Settings,
+  seed: number,
+  mode: "typography" | "typography-image",
+): Settings {
+  assertSeed(seed);
+  if (validateSettings(base).length) throw new Error("현재 설정이 올바르지 않습니다.");
+  if (!base.workflow.gridLocked || base.workflow.compositionLocked) return base;
+  const random = seeded(seed);
+  const page = pageSize(base.page);
+  // Text size is a page decision, not a one-cell decision. Dense but valid
+  // grids merge modules for a paragraph instead of shrinking body type.
+  const compactWeb = base.page.mode === "web" && Math.min(page.width, page.height) < 600;
+  const minSize = base.page.mode === "print" ? 12 : 14;
+  const maxSize = base.page.mode === "print" ? 18 : compactWeb ? 18 : 22;
+  const font = FONTS.find((item) => item.id === base.fontId)!;
+  const usefulWeights = font.weights.filter((weight) => weight >= 300 && weight <= 700);
+  const weights = usefulWeights.length ? usefulWeights : font.weights;
+  // The editor is pt-only: sample quarter-points, then store equivalent CSS px.
+  const fontSize = Math.round((minSize + random() * (maxSize - minSize)) * 0.75 * 4) / 4 / 0.75;
+  return {
+    ...base,
+    fontWeight: weights[integer(random, 0, weights.length - 1)]!,
+    fontSize,
+    lineHeight: Math.round(fontSize * (1.42 + random() * 0.2) * 4) / 4,
+    letterSpacing: Math.round((-0.15 + random() * 0.55) * 20) / 20,
+    density: Math.round((0.58 + random() * 0.26) * 100) / 100,
+    layout: "free",
+    seed,
+    workflow: { ...base.workflow, mode },
   };
 }
 
@@ -256,6 +357,23 @@ export function validateSettings(value: unknown): string[] {
     Math.abs(s.seed) > 2147483647
   )
     errors.push("구성 seed는 안전한 정수여야 합니다.");
+  if (own(s, "workflow")) {
+    const workflow = s.workflow;
+    if (
+      !record(workflow) ||
+      !finite(workflow.gridSeed) ||
+      !Number.isInteger(workflow.gridSeed) ||
+      Math.abs(workflow.gridSeed) > 2147483647 ||
+      typeof workflow.gridLocked !== "boolean" ||
+      typeof workflow.compositionLocked !== "boolean" ||
+      !["legacy", "empty", "typography", "typography-image"].includes(workflow.mode as string) ||
+      !Array.isArray(workflow.imageRatios) ||
+      !workflow.imageRatios.length ||
+      workflow.imageRatios.some((id) => !IMAGE_RATIOS.some((ratio) => ratio.id === id)) ||
+      new Set(workflow.imageRatios).size !== workflow.imageRatios.length ||
+      (workflow.compositionLocked && (!workflow.gridLocked || workflow.mode === "empty"))
+    ) errors.push("단계별 생성 상태를 확인하세요.");
+  }
   if (
     !["overlay", "grid", "text"].includes(s.view as string) ||
     typeof s.baseline !== "boolean"
@@ -321,6 +439,15 @@ export function parseSettings(json: string): Settings {
       seed: s.seed,
       view: s.view,
       baseline: s.baseline,
+      workflow: "workflow" in s
+        ? {
+            gridSeed: (s.workflow as WorkflowSettings).gridSeed,
+            gridLocked: (s.workflow as WorkflowSettings).gridLocked,
+            compositionLocked: (s.workflow as WorkflowSettings).compositionLocked,
+            mode: (s.workflow as WorkflowSettings).mode,
+            imageRatios: [...(s.workflow as WorkflowSettings).imageRatios],
+          }
+        : { ...DEFAULT_WORKFLOW, imageRatios: [...DEFAULT_WORKFLOW.imageRatios] },
     };
   } catch (error) {
     throw new Error(
@@ -335,6 +462,115 @@ type Span = {
   rowSpan: number;
   role: "heading" | "body";
 };
+type ImageSpan = Omit<Span, "role"> & { ratio: ImageRatioId };
+type StagedPlan = { spans: Span[]; images: ImageSpan[]; warning?: string };
+function stagedHeadingScale(s: Settings): number {
+  return [1.75, 2, 2.25, 2.5][integer(seeded((s.seed ^ 0x1b873593) | 0), 0, 3)]!;
+}
+function stagedPlan(s: Settings, measure: MeasureText, sample: string): StagedPlan {
+  if (s.workflow.mode === "empty") return { spans: [], images: [] };
+  const c = s.columns;
+  const r = s.rows;
+  const random = seeded((s.seed ^ 0x51ed270b) | 0);
+  const page = pageSize(s.page);
+  const moduleWidth = (page.width - s.margin.left - s.margin.right - (c - 1) * s.gutter.x) / c;
+  const moduleHeight = (page.height - s.margin.top - s.margin.bottom - (r - 1) * s.gutter.y) / r;
+  type Rect = Omit<Span, "role">;
+  const dimensions = (rect: Rect) => ({
+    width: rect.colSpan * moduleWidth + (rect.colSpan - 1) * s.gutter.x,
+    height: rect.rowSpan * moduleHeight + (rect.rowSpan - 1) * s.gutter.y,
+  });
+  const candidates = (minWidth: number, minHeight: number, maxArea: number, maxWidth = Infinity): Rect[] => {
+    const result: Rect[] = [];
+    for (let rowSpan = 1; rowSpan <= r; rowSpan++) for (let colSpan = 1; colSpan <= c; colSpan++) {
+      if (rowSpan * colSpan > maxArea) continue;
+      for (let row = 0; row <= r - rowSpan; row++) for (let col = 0; col <= c - colSpan; col++) {
+        const rect = { col, row, colSpan, rowSpan };
+        const size = dimensions(rect);
+        if (size.width >= minWidth && size.width <= maxWidth && size.height >= minHeight) result.push(rect);
+      }
+    }
+    return result;
+  };
+  const overlaps = (a: Rect, b: Rect) =>
+    a.col < b.col + b.colSpan && a.col + a.colSpan > b.col && a.row < b.row + b.rowSpan && a.row + a.rowSpan > b.row;
+  const area = c * r;
+  const excerpt = sample.replace(/\s+/gu, " ").trim().slice(0, 600);
+  const averageWidth = measure(excerpt, s.fontSize).width / Math.max(1, excerpt.length);
+  const headingSize = Math.max(24, s.fontSize * stagedHeadingScale(s));
+  const headingLeading = s.lineHeight * headingSize / s.fontSize;
+  const headingGlyph = measure("ÄÖÜäöüßHgjpq", headingSize);
+  const headingWidth = measure(excerpt, headingSize).width / Math.max(1, excerpt.length);
+  const headingCandidates = candidates(
+    headingWidth * 13,
+    headingGlyph.ascent + headingGlyph.descent + headingLeading * (s.baseline ? 2 : 1),
+    Math.max(1, Math.floor(area * 0.38)),
+    Math.max(moduleWidth, headingWidth * 58),
+  );
+  // calculateLayout applies density after fitting lines, so reserve enough
+  // physical height to still show three body lines at the selected density.
+  const bodyGlyph = measure("ÄÖÜäöüßHgjpq", s.fontSize);
+  const bodyCandidates = candidates(
+    averageWidth * 27,
+    bodyGlyph.ascent + bodyGlyph.descent + s.lineHeight * (Math.ceil(3 / s.density) - (s.baseline ? 0 : 1)),
+    Math.max(1, area - (s.workflow.mode === "typography-image" ? 2 : 1)),
+    // A manually chosen single wide column cannot be subdivided implicitly.
+    Math.max(moduleWidth, averageWidth * 78),
+  );
+  const imageCandidates = candidates(64, 64, Math.max(1, Math.floor(area * 0.4)));
+  const ratioId = s.workflow.imageRatios[integer(random, 0, s.workflow.imageRatios.length - 1)]!;
+  const primaryRatio = IMAGE_RATIOS.find((ratio) => ratio.id === ratioId)!;
+  const usableArea = (page.width - s.margin.left - s.margin.right) * (page.height - s.margin.top - s.margin.bottom);
+  const prominentImages = imageCandidates.filter((rect) => {
+    const size = dimensions(rect);
+    const fit = Math.min(size.width / primaryRatio.width, size.height / primaryRatio.height);
+    return primaryRatio.width * primaryRatio.height * fit * fit >= usableArea * 0.075;
+  });
+  if (!headingCandidates.length || !bodyCandidates.length)
+    return { spans: [], images: [], warning: "현재 그리드는 읽기 가능한 제목과 3행 문단을 함께 담기에는 너무 작습니다." };
+  // Candidate/retry placement makes results open-ended, but keeps every accepted
+  // composition within readable physical dimensions. It never falls back to the
+  // legacy free generator.
+  for (let attempt = 0; attempt < 640; attempt++) {
+    const headingRect = headingCandidates[integer(random, 0, headingCandidates.length - 1)]!;
+    const possibleBodies = bodyCandidates.filter((rect) => !overlaps(rect, headingRect));
+    if (!possibleBodies.length) continue;
+    const bodyRect = possibleBodies[integer(random, 0, possibleBodies.length - 1)]!;
+    const used: Rect[] = [headingRect, bodyRect];
+    const images: ImageSpan[] = [];
+    if (s.workflow.mode === "typography-image") {
+      const primaryCandidates = attempt < 480 && prominentImages.length ? prominentImages : imageCandidates;
+      const possibleImages = primaryCandidates.filter((rect) => used.every((item) => !overlaps(rect, item)));
+      if (!possibleImages.length) continue;
+      const primary = possibleImages[integer(random, 0, possibleImages.length - 1)]!;
+      used.push(primary);
+      images.push({ ...primary, ratio: ratioId });
+      const wanted = integer(random, 1, 3);
+      while (images.length < wanted) {
+        const extras = imageCandidates.filter((rect) => used.every((item) => !overlaps(rect, item)));
+        if (!extras.length) break;
+        const extra = extras[integer(random, 0, extras.length - 1)]!;
+        used.push(extra);
+        images.push({ ...extra, ratio: s.workflow.imageRatios[integer(random, 0, s.workflow.imageRatios.length - 1)]! });
+      }
+    }
+    const spans: Span[] = [
+      { ...headingRect, role: "heading" },
+      { ...bodyRect, role: "body" },
+    ];
+    // A second paragraph is optional and is only admitted when it is also a
+    // complete, readable block; blank space remains a deliberate layout tool.
+    if (random() > 0.56) {
+      const extras = bodyCandidates.filter((rect) => used.every((item) => !overlaps(rect, item)));
+      if (extras.length) {
+        const extra = extras[integer(random, 0, extras.length - 1)]!;
+        spans.push({ ...extra, role: "body" });
+      }
+    }
+    return { spans, images };
+  }
+  return { spans: [], images: [], warning: "현재 그리드에서는 읽기 가능한 본문과 이미지 상자를 동시에 배치할 수 없습니다." };
+}
 function freeSpans(s: Settings): Span[] {
   const { columns: c, rows: r } = s;
   // Placement has its own stream so changing randomized dimensions cannot
@@ -497,6 +733,7 @@ function wrap(
   maxLines: number,
   size: number,
   measure: MeasureText,
+  wholeWords = false,
 ): { lines: string[]; text: string; flow: Flow } {
   let flow = { ...input };
   let line = "";
@@ -528,6 +765,9 @@ function wrap(
       startsMidWord = false;
       continue;
     }
+    // Keep a generated heading's last word intact. A long word can continue
+    // in the body instead of being torn between two separate text blocks.
+    if (wholeWords && lines.length > 0 && flow.offset === 0) break;
     let chars = 0;
     for (const char of word) {
       if (!fits(word.slice(0, chars + char.length))) break;
@@ -563,12 +803,17 @@ export function calculateLayout(
     (settings.rows - 1) * settings.gutter.y;
   const moduleWidth = usableW / settings.columns;
   const moduleHeight = usableH / settings.rows;
-  const spans = spansFor(settings);
-  safeSpans(spans, settings.columns, settings.rows);
+  if (settings.workflow.mode === "empty")
+    return { width, height, moduleWidth, moduleHeight, blocks: [], images: [], warnings: [] };
+  const plan = settings.workflow.mode === "legacy"
+    ? { spans: spansFor(settings), images: [] as ImageSpan[] }
+    : stagedPlan(settings, measure, sample);
+  const spans = plan.spans;
+  safeSpans([...spans, ...plan.images.map((image) => ({ ...image, role: "body" as const }))], settings.columns, settings.rows);
   const source = words(sample);
   const glyph = measure("ÄÖÜäöüßHgjpq", settings.fontSize);
   let flow: Flow = { word: 0, offset: 0 };
-  const warnings: string[] = [];
+  const warnings: string[] = plan.warning ? [plan.warning] : [];
   if (settings.lineHeight < glyph.ascent + glyph.descent)
     warnings.push("행간이 실제 글리프 높이보다 작아 줄이 겹칠 수 있습니다.");
   const blocks: TextBlock[] = [];
@@ -583,7 +828,9 @@ export function calculateLayout(
       span.colSpan * moduleWidth + (span.colSpan - 1) * settings.gutter.x;
     const blockHeight =
       span.rowSpan * moduleHeight + (span.rowSpan - 1) * settings.gutter.y;
-    const factor = span.role === "heading" ? sFactor(settings.layout) : 1;
+    const factor = span.role === "heading"
+      ? settings.workflow.mode === "legacy" ? sFactor(settings.layout) : stagedHeadingScale(settings)
+      : 1;
     const fontSize = Math.min(
       2000,
       Math.max(
@@ -591,7 +838,9 @@ export function calculateLayout(
         span.role === "heading" ? 24 : settings.fontSize,
       ),
     );
-    const lineHeight = span.role === "heading" ? settings.lineHeight * factor : settings.lineHeight;
+    const lineHeight = span.role === "heading"
+      ? settings.lineHeight * (settings.workflow.mode === "legacy" ? factor : fontSize / settings.fontSize)
+      : settings.lineHeight;
     const metric = measure("ÄÖÜäöüßHgjpq", fontSize);
     if (lineHeight < metric.ascent + metric.descent) {
       warnings.push(
@@ -627,6 +876,7 @@ export function calculateLayout(
       maxLines,
       fontSize,
       measure,
+      span.role === "heading" && settings.workflow.mode !== "legacy",
     );
     if (!result.lines.length) {
       warnings.push(
@@ -658,9 +908,24 @@ export function calculateLayout(
       lines,
     });
   }
-  if (!blocks.length)
+  const images: ImageBlock[] = plan.images.map((span, index) => {
+    const reservedX = settings.margin.left + span.col * (moduleWidth + settings.gutter.x);
+    const reservedY = settings.margin.top + span.row * (moduleHeight + settings.gutter.y);
+    const reservedWidth = span.colSpan * moduleWidth + (span.colSpan - 1) * settings.gutter.x;
+    const reservedHeight = span.rowSpan * moduleHeight + (span.rowSpan - 1) * settings.gutter.y;
+    const ratio = IMAGE_RATIOS.find((item) => item.id === span.ratio)!;
+    const scale = Math.min(reservedWidth / ratio.width, reservedHeight / ratio.height);
+    const imageWidth = ratio.width * scale;
+    const imageHeight = ratio.height * scale;
+    // Align to an edge instead of arbitrarily floating inside the grid cell.
+    const edge = integer(seeded((settings.seed ^ (index + 1) * 0x45d9f3b) | 0), 0, 3);
+    const x = edge === 1 || edge === 3 ? reservedX + reservedWidth - imageWidth : reservedX;
+    const y = edge === 2 || edge === 3 ? reservedY + reservedHeight - imageHeight : reservedY;
+    return { id: `image-${index}`, role: "image", ...span, x, y, width: imageWidth, height: imageHeight };
+  });
+  if (!blocks.length && !images.length)
     warnings.push("현재 설정으로는 온전한 텍스트 행을 배치할 수 없습니다.");
-  return { width, height, moduleWidth, moduleHeight, blocks, warnings };
+  return { width, height, moduleWidth, moduleHeight, blocks, images, warnings };
 }
 function sFactor(layout: Settings["layout"]): number {
   return layout === "editorial" ? 4 : layout === "aligned" ? 3 : layout === "free" ? 1.5 : 2.5;

@@ -7,6 +7,20 @@ import type {
 } from "./model";
 import { fontFaceCss, fontStack, getFont, nearestWeight } from "./fonts";
 
+/**
+ * Kept structural here while version 1.2 layouts are rolling out.  Older
+ * saved layouts do not have an `images` member, so exports must remain
+ * perfectly valid for them too.
+ */
+type ImagePlaceholder = {
+  id: string;
+  ratio: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
+
 const xml = (value: string) =>
   value.replace(
     /[&<>'"]/g,
@@ -25,6 +39,30 @@ const archivePath = (path: string) =>
     ? path.replace(/^\/+/, "")
     : `fonts/${path.replace(/^\/+/, "")}`;
 const relativePath = (path: string) => `./${archivePath(path)}`;
+
+const imageBlocks = (layout: LayoutResult): readonly ImagePlaceholder[] =>
+  (layout as LayoutResult & { images?: ImagePlaceholder[] }).images ?? [];
+const imageLabel = (image: ImagePlaceholder) =>
+  `Image placeholder, ${image.ratio}`;
+const imageLabelSize = (image: ImagePlaceholder) =>
+  n(Math.max(9, Math.min(14, Math.min(image.width, image.height) * 0.14)));
+const imageAspect = (ratio: string) => {
+  const [width, height] = ratio.split(":").map(Number);
+  return Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0
+    ? `${width} / ${height}`
+    : "1 / 1";
+};
+
+function svgImages(layout: LayoutResult, font: FontDefinition, weight: number): string {
+  return imageBlocks(layout)
+    .map((image) => {
+      const labelSize = imageLabelSize(image);
+      const labelX = n(image.x + image.width / 2);
+      const labelY = n(image.y + image.height / 2 + labelSize * 0.34);
+      return `<g class="image-placeholder" data-image-block="${xml(image.id)}" data-image-ratio="${xml(image.ratio)}" role="img" aria-label="${xml(imageLabel(image))}"><rect x="${n(image.x)}" y="${n(image.y)}" width="${n(image.width)}" height="${n(image.height)}" fill="#E4E6E8" stroke="#A1A6AB" stroke-width="1"/><path d="M${n(image.x)} ${n(image.y)}L${n(image.x + image.width)} ${n(image.y + image.height)}M${n(image.x + image.width)} ${n(image.y)}L${n(image.x)} ${n(image.y + image.height)}" fill="none" stroke="#A1A6AB" stroke-width="1"/><text x="${labelX}" y="${labelY}" text-anchor="middle" font-family="${xml(fontStack(font))}" font-size="${labelSize}" font-weight="${weight}" fill="#62676C">${xml(image.ratio)}</text></g>`;
+    })
+    .join("");
+}
 
 export function serializeSettings(settings: Settings): string {
   return JSON.stringify(settings, null, 2);
@@ -69,7 +107,8 @@ export function exportSvg(
               `<text font-family="${xml(fontStack(font))}" font-weight="${settings.fontWeight}" font-size="${block.fontSize}" letter-spacing="${settings.letterSpacing}" fill="${settings.textColor}" fill-opacity="${settings.textOpacity}">${block.lines.map((line) => `<tspan x="${n(line.x)}" y="${n(line.y)}">${xml(line.text)}</tspan>`).join("")}</text>`,
           )
           .join("");
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Editable SVG text depends on ${font.name} being installed or available in the importing app. -->\n<svg xmlns="http://www.w3.org/2000/svg" ${physical} viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Grid System layout"><rect width="${layout.width}" height="${layout.height}" fill="#fff"/>${guides}${baseline}${text}</svg>`;
+  const images = settings.view === "grid" ? "" : svgImages(layout, font, settings.fontWeight);
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<!-- Editable SVG text depends on ${font.name} being installed or available in the importing app. -->\n<svg xmlns="http://www.w3.org/2000/svg" ${physical} viewBox="0 0 ${layout.width} ${layout.height}" role="img" aria-label="Grid System layout"><rect width="${layout.width}" height="${layout.height}" fill="#fff"/>${guides}${baseline}${images}${text}</svg>`;
 }
 
 function lines(block: TextBlock): string {
@@ -98,6 +137,16 @@ function guideCells(settings: Settings): string {
   ).join("");
 }
 
+function htmlImages(settings: Settings, layout: LayoutResult): string {
+  if (settings.view === "grid") return "";
+  return imageBlocks(layout)
+    .map(
+      (image) =>
+        `<figure class="image-block" data-image-block="${xml(image.id)}" data-image-ratio="${xml(image.ratio)}" aria-label="${xml(imageLabel(image))}" style="--image-x:${n(image.x - settings.margin.left)}px;--image-y:${n(image.y - settings.margin.top)}px;--image-width:${n(image.width)}px;--image-height:${n(image.height)}px;--image-aspect:${imageAspect(image.ratio)};--image-label-size:${imageLabelSize(image)}px"><i class="image-cross" aria-hidden="true"></i><figcaption>${xml(image.ratio)}</figcaption></figure>`,
+    )
+    .join("\n");
+}
+
 function html(settings: Settings, layout: LayoutResult): string {
   const blocks =
     settings.view === "grid"
@@ -108,11 +157,12 @@ function html(settings: Settings, layout: LayoutResult): string {
               `<${block.role === "heading" ? "h1" : "p"} class="block ${block.role}" style="--col:${block.col + 1};--row:${block.row + 1};--col-span:${block.colSpan};--row-span:${block.rowSpan};--font-size:${block.fontSize}px;--line-height:${block.lineHeight}px">${lines(block)}${flowText(block)}</${block.role === "heading" ? "h1" : "p"}>`,
           )
           .join("\n");
+  const images = htmlImages(settings, layout);
   const baselines =
     settings.baseline && settings.view !== "text"
       ? `<div class="baselines" aria-hidden="true">${layout.blocks.flatMap((block) => block.lines.map((line) => `<i class="baseline" style="--baseline-x:${n(line.x)}px;--baseline-y:${n(line.y)}px;--baseline-width:${n(block.width)}px"></i>`)).join("")}</div>`
       : "";
-  return `<!doctype html>\n<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Grid System export</title><link rel="stylesheet" href="styles.css"></head><body><main class="page">${settings.view === "text" ? "" : `<div class="guides" aria-hidden="true">${guideCells(settings)}<i class="guide-boundary"></i></div>`}${baselines}<article class="content">${blocks}</article></main></body></html>`;
+  return `<!doctype html>\n<html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Grid System export</title><link rel="stylesheet" href="styles.css"></head><body><main class="page">${settings.view === "text" ? "" : `<div class="guides" aria-hidden="true">${guideCells(settings)}<i class="guide-boundary"></i></div>`}${baselines}<article class="content">${images}${blocks}</article></main></body></html>`;
 }
 
 function css(
@@ -136,9 +186,10 @@ function css(
 .content { height:${Math.max(0, layout.height - settings.margin.top - settings.margin.bottom)}px; position:relative; z-index:1; display:grid; grid-template-columns:repeat(${settings.columns},minmax(0,1fr)); grid-template-rows:repeat(${settings.rows},minmax(0,1fr)); gap:${settings.gutter.y}px ${settings.gutter.x}px; }
 .block { grid-column:var(--col) / span var(--col-span); grid-row:var(--row) / span var(--row-span); min-width:0; margin:0; position:relative; font-size:var(--font-size); line-height:var(--line-height); letter-spacing:${settings.letterSpacing}px; font-weight:${settings.fontWeight}; color:${settings.textColor}; opacity:${settings.textOpacity}; }.heading { font-weight:${settings.fontWeight}; }
 .line { position:absolute; left:var(--line-x); top:var(--line-y); display:block; width:max-content; height:0; white-space:pre; line-height:0; }.line::before { content:""; display:inline-block; width:0; height:0; vertical-align:baseline; }.flow-text { display:none; }
+.image-block { position:absolute; z-index:0; left:var(--image-x); top:var(--image-y); width:var(--image-width); height:var(--image-height); margin:0; overflow:hidden; background:#E4E6E8; border:1px solid #A1A6AB; color:#62676C; font-family:${fontStack(font)}; }.image-cross { position:absolute; inset:0; background:linear-gradient(to bottom right, transparent calc(50% - .5px), #A1A6AB calc(50% - .5px), #A1A6AB calc(50% + .5px), transparent calc(50% + .5px)),linear-gradient(to top right, transparent calc(50% - .5px), #A1A6AB calc(50% - .5px), #A1A6AB calc(50% + .5px), transparent calc(50% + .5px)); }.image-block figcaption { position:absolute; left:50%; top:50%; transform:translate(-50%,-50%); margin:0; font-size:var(--image-label-size);font-weight:${settings.fontWeight}; line-height:1; white-space:nowrap; }
 .guides { position:absolute; inset:${settings.margin.top}px ${settings.margin.right}px ${settings.margin.bottom}px ${settings.margin.left}px; z-index:0; pointer-events:none; display:grid; grid-template-columns:repeat(${settings.columns},minmax(0,1fr)); grid-template-rows:repeat(${settings.rows},minmax(0,1fr)); gap:${settings.gutter.y}px ${settings.gutter.x}px; opacity:${settings.gridOpacity}; }.guide-cell { background:${settings.gridColor}; border:.5px solid ${settings.gridColor}; }.guide-boundary { grid-area:1 / 1 / -1 / -1; border:.5px solid ${settings.gridColor}; pointer-events:none; }
 .baselines { position:absolute; inset:0; z-index:2; pointer-events:none; opacity:${settings.gridOpacity}; }.baseline { position:absolute; left:var(--baseline-x); top:var(--baseline-y); width:var(--baseline-width); border-top:.5px solid ${settings.gridColor}; }
-@media screen and (max-width:700px) { .page { width:100%; height:auto; min-height:100vh; overflow:visible; padding:24px; }.content { display:block; height:auto; }.block { margin:0 0 1.5rem; overflow-wrap:anywhere; }.line { display:none; }.flow-text { display:inline; overflow-wrap:anywhere; }.guides,.baselines { display:none; } }
+@media screen and (max-width:700px) { .page { width:100%; height:auto; min-height:100vh; overflow:visible; padding:24px; }.content { display:block; height:auto; }.block { margin:0 0 1.5rem; overflow-wrap:anywhere; }.line { display:none; }.flow-text { display:inline; overflow-wrap:anywhere; }.image-block { position:relative; left:auto; top:auto; width:min(var(--image-width),100%); height:auto; aspect-ratio:var(--image-aspect); margin:0 0 1.5rem; }.guides,.baselines { display:none; } }
 @media print { html,body { width:${width}; height:${height}; background:#fff; }.page { width:${width}; height:${height}; margin:0; }.content { display:grid; height:${Math.max(0, layout.height - settings.margin.top - settings.margin.bottom)}px; }.line { position:absolute; display:block; width:max-content; height:0; white-space:pre; line-height:0; }.flow-text { display:none; }.guides,.baselines { display:grid; } .baselines { display:block; } }
 `;
 }

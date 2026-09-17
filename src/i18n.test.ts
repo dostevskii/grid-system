@@ -14,6 +14,7 @@ describe("English and Korean interface messages", () => {
     const invalid = [
       null, {},
       { ...DEFAULT_SETTINGS, page: null },
+      { ...DEFAULT_SETTINGS, workflow: null },
       { ...DEFAULT_SETTINGS, page: { ...DEFAULT_SETTINGS.page, width: 0 } },
       {
         ...DEFAULT_SETTINGS,
@@ -49,6 +50,10 @@ describe("English and Korean interface messages", () => {
       "Inter 폰트를 불러오지 못했습니다. 연결을 확인하고 다시 시도하세요.",
       "자산을 가져오지 못했습니다: /font-notices/Inter.txt",
       "폰트 파일을 가져오지 못했습니다: /fonts/inter.woff2",
+      "현재 설정이 올바르지 않습니다.",
+      "단계별 생성 상태를 확인하세요.",
+      "현재 그리드는 읽기 가능한 제목과 3행 문단을 함께 담기에는 너무 작습니다.",
+      "현재 그리드에서는 읽기 가능한 본문과 이미지 상자를 동시에 배치할 수 없습니다.",
     ];
     for (const message of messages)
       expect(translateMessage("en", message)).not.toMatch(/[가-힣]/);

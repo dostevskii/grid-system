@@ -46,9 +46,13 @@ test("font size is pt-only and preserves equivalent SVG, HTML and JSON sizes", a
   await ready(page);
   await expect(fontSize).toHaveValue("18");
 
-  await page.getByTestId("seed-input").fill("149");
-  await page.getByTestId("apply-seed").click();
+  await page.getByTestId("randomize-grid").click();
+  await ready(page);
+  await page.getByTestId("toggle-grid-lock").click();
+  await page.getByTestId("randomize-typography").click();
+  await ready(page);
   const randomized = JSON.parse(strFromU8(await download(page, "json")));
+  expect(randomized.workflow).toMatchObject({ gridLocked: true, mode: "typography" });
   expect(Number(await fontSize.inputValue())).toBeCloseTo(randomized.fontSize * 72 / 96, 4);
   await expect(fontSize.locator("..").locator(".input-unit")).toHaveText("pt");
 });

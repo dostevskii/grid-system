@@ -207,10 +207,10 @@ test("view modes, input errors and invalid imports keep a safe last layout", asy
   await page.getByRole("button", { name: "그리드", exact: true }).click();
   await expect(page.locator(".artboard svg text")).toHaveCount(0);
   await expect(page.locator(".artboard .grid")).toHaveCount(1);
-  await page.getByRole("button", { name: "텍스트", exact: true }).click();
+  await page.getByRole("button", { name: "콘텐츠", exact: true }).click();
   await expect(page.locator(".artboard .grid")).toHaveCount(0);
   await page
-    .getByRole("button", { name: "그리드 + 텍스트", exact: true })
+    .getByRole("button", { name: "그리드 + 콘텐츠", exact: true })
     .click();
   await page.getByRole("spinbutton", { name: "그리드 불투명도" }).fill("0");
   await expect(page.locator(".artboard .grid")).toHaveAttribute(

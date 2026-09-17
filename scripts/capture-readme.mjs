@@ -50,8 +50,17 @@ try {
   await page.getByRole('button', { name: /font/i }).click();
   await page.getByRole('dialog').getByRole('button', { name: /^Libre Baskerville/ }).click();
   await ready();
+  await page.getByTestId('grid-seed-input').fill('71');
+  await page.getByTestId('apply-grid-seed').click();
+  await ready();
+  await page.getByTestId('toggle-grid-lock').click();
+  await ready();
+  await page.getByTestId('randomize-typography-image').click();
+  await ready();
   await page.getByTestId('seed-input').fill('149');
   await page.getByTestId('apply-seed').click();
+  await ready();
+  await page.getByTestId('toggle-composition-lock').click();
   await ready();
   if (await closeNotice.count()) await closeNotice.click();
   await page.getByRole('button', { name: /artboard preset/i }).scrollIntoViewIfNeeded();

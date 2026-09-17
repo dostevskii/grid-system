@@ -5,6 +5,8 @@ import {
   fromPx,
   parseSettings,
   randomizeSettings,
+  randomizeGrid,
+  randomizeTypography,
   toPx,
   validateSettings,
 } from "./core";
@@ -363,5 +365,157 @@ describe("deterministic free randomizer", () => {
     );
     expect(result.blocks.some((block) => block.role === "heading" && block.col === 0 && block.row === 2)).toBe(true);
     expect(result.blocks.some((block) => block.role === "body" && block.col === 2 && block.row === 2)).toBe(true);
+  });
+});
+
+describe("staged, quality-constrained randomization", () => {
+  const sample = "Alpha Beta Gamma Delta Epsilon Zeta Eta Theta Iota Kappa Lambda Mu Nu Xi Omicron Pi Rho Sigma Tau Upsilon Phi Chi Psi Omega";
+  it("treats a clean grid as a valid stage, not a text-placement failure", () => {
+    const grid = randomizeGrid(DEFAULT_SETTINGS, 1);
+    const result = calculateLayout(grid, sample, measure);
+    expect(result.blocks).toEqual([]);
+    expect(result.images).toEqual([]);
+    expect(result.warnings).toEqual([]);
+  });
+  it("rejects contradictory locks and duplicate image ratios on import", () => {
+    for (const workflow of [
+      { ...DEFAULT_SETTINGS.workflow, compositionLocked: true },
+      { ...DEFAULT_SETTINGS.workflow, gridLocked: true, compositionLocked: true, mode: "empty" },
+      { ...DEFAULT_SETTINGS.workflow, imageRatios: ["1:1", "1:1"] },
+    ]) expect(() => parseSettings(JSON.stringify({ ...DEFAULT_SETTINGS, workflow }))).toThrow();
+  });
+  it("constrains body measure and scales heading leading even for small print type", () => {
+    const grid = { ...DEFAULT_SETTINGS, workflow: { ...DEFAULT_SETTINGS.workflow, gridLocked: true } };
+    for (let seed = 0; seed < 100; seed++) {
+      const settings = randomizeTypography(grid, seed, "typography");
+      const result = calculateLayout(settings, sample, measure);
+      for (const block of result.blocks) {
+        if (block.role === "body") {
+          const characterWidth = measure(sample, settings.fontSize).width / sample.length;
+          expect(block.width / characterWidth).toBeLessThanOrEqual(78.01);
+        } else {
+          expect(block.lineHeight / block.fontSize).toBeCloseTo(settings.lineHeight / settings.fontSize, 8);
+        }
+      }
+    }
+  });
+  it("keeps long German words whole at the generated heading-to-body boundary", () => {
+    const text = "Wer sich der Fülle von Druckerzeugnissen aller Art bei einer Sichtung gegenübersieht findet neue Möglichkeiten.";
+    const base = { ...DEFAULT_SETTINGS, workflow: { ...DEFAULT_SETTINGS.workflow, gridLocked: true } };
+    for (let seed = 0; seed < 100; seed++) {
+      const result = calculateLayout(randomizeTypography(base, seed, "typography"), text, measure);
+      const heading = result.blocks.find((block) => block.role === "heading")!;
+      const body = result.blocks.find((block) => block.role === "body")!;
+      expect(text.split(" ")).toContain(heading.text!.split(" ").at(-1));
+      expect(text.split(" ")).toContain(body.text!.split(" ")[0]);
+      const normalized = `${heading.text} ${body.text}`.replace(/\s/gu, "");
+      expect((text.replace(/\s/gu, "")).repeat(100).startsWith(normalized)).toBe(true);
+    }
+  });
+  it("migrates legacy JSON to an explicit legacy workflow", () => {
+    const legacy = { ...DEFAULT_SETTINGS } as Record<string, unknown>;
+    delete legacy.workflow;
+    expect(parseSettings(JSON.stringify(legacy)).workflow).toMatchObject({
+      mode: "legacy", gridLocked: false, compositionLocked: false, gridSeed: 0,
+    });
+  });
+  it("separates grid and composition seeds, and observes both locks", () => {
+    const grid = randomizeGrid(DEFAULT_SETTINGS, 71);
+    expect(grid.workflow).toMatchObject({ gridSeed: 71, mode: "empty", compositionLocked: false });
+    expect(grid.seed).toBe(DEFAULT_SETTINGS.seed);
+    const locked = { ...grid, workflow: { ...grid.workflow, gridLocked: true } };
+    const typography = randomizeTypography(locked, 72, "typography");
+    expect(typography).toMatchObject({ columns: grid.columns, rows: grid.rows, margin: grid.margin, gutter: grid.gutter, seed: 72 });
+    expect(typography.workflow.mode).toBe("typography");
+    expect(randomizeGrid(locked, 99)).toBe(locked);
+    const compositionLocked = { ...typography, workflow: { ...typography.workflow, compositionLocked: true } };
+    expect(randomizeTypography(compositionLocked, 73, "typography-image")).toBe(compositionLocked);
+    expect(randomizeTypography(grid, 72, "typography")).toBe(grid);
+  });
+  it("creates usable regular grids and readable staged typography across common pages", () => {
+    const pages = [
+      DEFAULT_SETTINGS,
+      { ...DEFAULT_SETTINGS, page: { ...DEFAULT_SETTINGS.page, width: 390, height: 844, orientation: "portrait" as const } },
+      { ...DEFAULT_SETTINGS, page: { presetId: "a4", category: "ISO", mode: "print" as const, unit: "mm" as const, width: 210, height: 297, orientation: "portrait" as const } },
+    ];
+    for (const base of pages) for (let seed = 1; seed <= 40; seed++) {
+      const grid = randomizeGrid(base, seed);
+      expect(validateSettings(grid)).toEqual([]);
+      const page = toPx(grid.page.width, grid.page.unit);
+      expect(grid.columns).toBeGreaterThanOrEqual(2);
+      expect(grid.rows).toBeGreaterThanOrEqual(2);
+      expect(grid.margin.left).toBeGreaterThan(0);
+      expect(grid.gutter.x).toBeGreaterThan(0);
+      expect(page).toBeGreaterThan(0);
+      const staged = randomizeTypography({ ...grid, workflow: { ...grid.workflow, gridLocked: true } }, seed, "typography");
+      expect(staged.lineHeight).toBeGreaterThanOrEqual(staged.fontSize * 1.42 - 0.125);
+      expect(staged.lineHeight).toBeLessThanOrEqual(staged.fontSize * 1.62 + 0.125);
+      expect(staged.fontSize * 0.75 * 4).toBeCloseTo(Math.round(staged.fontSize * 0.75 * 4), 8);
+      const layout = calculateLayout(staged, sample, measure);
+      expect(layout.blocks.some((block) => block.role === "heading")).toBe(true);
+      expect(layout.blocks.some((block) => block.role === "body" && block.lines.length >= 1)).toBe(true);
+      const used = new Set<string>();
+      for (const block of layout.blocks) for (let row = block.row; row < block.row + block.rowSpan; row++) for (let col = block.col; col < block.col + block.colSpan; col++) {
+        expect(used.has(`${col}:${row}`)).toBe(false); used.add(`${col}:${row}`);
+      }
+    }
+  });
+  it("uses deterministic, aspect-correct, edge-aligned image placeholders without text collisions", () => {
+    const grid = randomizeGrid(DEFAULT_SETTINGS, 311);
+    const staged = randomizeTypography({ ...grid, workflow: { ...grid.workflow, gridLocked: true } }, 312, "typography-image");
+    const a = calculateLayout(staged, sample, measure);
+    const b = calculateLayout(staged, sample, measure);
+    expect(a.images).toEqual(b.images);
+    expect(a.images.length).toBeGreaterThan(0);
+    const occupied = new Set<string>();
+    for (const block of a.blocks) for (let row = block.row; row < block.row + block.rowSpan; row++) for (let col = block.col; col < block.col + block.colSpan; col++) occupied.add(`${col}:${row}`);
+    for (const image of a.images) {
+      const ratio = image.ratio.split(":").map(Number);
+      expect(image.width / image.height).toBeCloseTo(ratio[0]! / ratio[1]!);
+      expect(image.x).toBeGreaterThanOrEqual(image.col * (a.moduleWidth + staged.gutter.x) + staged.margin.left - 0.001);
+      for (let row = image.row; row < image.row + image.rowSpan; row++) for (let col = image.col; col < image.col + image.colSpan; col++) expect(occupied.has(`${col}:${row}`)).toBe(false);
+    }
+  });
+  it("keeps 200 staged compositions readable, varied and image-complete on normal presets", () => {
+    const bases = [
+      DEFAULT_SETTINGS,
+      { ...DEFAULT_SETTINGS, page: { ...DEFAULT_SETTINGS.page, width: 390, height: 844, orientation: "portrait" as const } },
+      { ...DEFAULT_SETTINGS, page: { presetId: "a4", category: "ISO", mode: "print" as const, unit: "mm" as const, width: 210, height: 297, orientation: "portrait" as const } },
+    ];
+    const starts = new Set<string>();
+    for (const base of bases) for (let seed = 1; seed <= 200; seed++) {
+      const grid = randomizeGrid(base, seed);
+      const staged = randomizeTypography({ ...grid, workflow: { ...grid.workflow, gridLocked: true } }, seed, "typography-image");
+      const layout = calculateLayout(staged, sample, measure);
+      expect(layout.warnings.some((warning) => warning.includes("읽기 가능한"))).toBe(false);
+      expect(layout.images.length).toBeGreaterThanOrEqual(1);
+      const body = layout.blocks.find((block) => block.role === "body");
+      expect(body?.lines.length).toBeGreaterThanOrEqual(3);
+      expect(body?.width ?? 0).toBeGreaterThanOrEqual(staged.fontSize * 12);
+      const heading = layout.blocks.find((block) => block.role === "heading");
+      starts.add(`${heading?.col}:${heading?.row}`);
+    }
+    expect(starts.size).toBeGreaterThan(12);
+  });
+  it("uses a single grid axis when it can physically hold a paragraph, and warns when it cannot", () => {
+    for (const geometry of [{ columns: 1, rows: 8 }, { columns: 8, rows: 1 }]) {
+      const base = { ...DEFAULT_SETTINGS, ...geometry, workflow: { ...DEFAULT_SETTINGS.workflow, gridLocked: true, gridSeed: 9, mode: "empty" as const } };
+      const staged = randomizeTypography(base, 18, "typography");
+      const layout = calculateLayout(staged, sample, measure);
+      expect(layout.blocks.some((block) => block.role === "heading")).toBe(true);
+      expect(layout.blocks.some((block) => block.role === "body" && block.lines.length >= 3)).toBe(true);
+    }
+    const tooSmall = randomizeTypography({ ...DEFAULT_SETTINGS, columns: 1, rows: 1, workflow: { ...DEFAULT_SETTINGS.workflow, gridLocked: true } }, 18, "typography");
+    expect(calculateLayout(tooSmall, sample, measure).warnings.join(" ")).toContain("읽기 가능한");
+  });
+  it("keeps every registered font inside the staged quality envelope", () => {
+    for (const font of FONTS) {
+      const grid = randomizeGrid({ ...DEFAULT_SETTINGS, fontId: font.id, fontWeight: font.weights[0]! }, 87);
+      const staged = randomizeTypography({ ...grid, workflow: { ...grid.workflow, gridLocked: true } }, 88, "typography-image");
+      const layout = calculateLayout(staged, sample, measure);
+      expect(font.weights).toContain(staged.fontWeight);
+      expect(layout.images.length).toBeGreaterThanOrEqual(1);
+      expect(layout.blocks.find((block) => block.role === "body")?.lines.length).toBeGreaterThanOrEqual(3);
+    }
   });
 });
