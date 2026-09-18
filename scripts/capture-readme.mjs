@@ -9,7 +9,7 @@ await mkdir(outputDirectory, { recursive: true });
 const browser = await chromium.launch({ channel: 'chrome', headless: true });
 const context = await browser.newContext({
   baseURL,
-  viewport: { width: 1600, height: 1100 },
+  viewport: { width: 1440, height: 1024 },
   deviceScaleFactor: 1,
   colorScheme: 'light',
   reducedMotion: 'reduce',
@@ -28,7 +28,7 @@ async function capture(name) {
   await page.mouse.move(0, 0);
   await page.screenshot({
     path: `${outputDirectory}/${name}.png`,
-    fullPage: true,
+    fullPage: false,
     animations: 'disabled',
   });
   console.log(`Captured ${name}.png from ${baseURL}`);
@@ -39,6 +39,18 @@ try {
   await ready();
   await expect(page.getByTestId('language-select')).toHaveValue('en');
   await capture('grid-system-desktop');
+
+  await page.getByTestId('toggle-grid-lock').click();
+  await ready();
+  await page.getByTestId('randomize-typography-image').click();
+  await ready();
+  await page.getByTestId('seed-input').fill('149');
+  await page.getByTestId('apply-seed').click();
+  await ready();
+  await expect(page.locator('[data-image-block]').first()).toBeVisible();
+  await capture('grid-system-composition');
+  await page.getByTestId('toggle-grid-lock').click();
+  await ready();
 
   await page.getByRole('button', { name: /artboard preset/i }).click();
   await page.getByRole('dialog').getByRole('button', { name: 'Print', exact: true }).click();

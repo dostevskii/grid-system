@@ -1,133 +1,432 @@
+<div align="center">
+
 # Grid System
 
-그리드의 비율과 타이포그래피를 화면에서 조율하고, 실제 작업에 쓸 수 있는 레이아웃 설정으로 내보내는 브라우저 기반 도구입니다.
+**grid-based layout experiments for web and print**
 
-[grid-system.pages.dev — 바로 사용하기](https://grid-system.pages.dev/) · [검증 기록](VERIFICATION.md)
+Find a grid, lock it, then explore typography and image placeholders on top.  
+Take the result into Figma or your next web project with SVG, HTML/CSS, and JSON exports.
 
-현재 버전 **1.2.0** · English / 한국어
+**[▶ Live demo — grid-system.pages.dev](https://grid-system.pages.dev/)**
 
-![20분할 편집 화면](docs/screenshots/grid-system-desktop.png)
+[English](#what-is-grid-system) · [한국어](#한국어) · v1.2.0
 
-Josef Müller-Brockmann의 그리드 사고를 오늘의 웹 작업 흐름으로 옮깁니다. 고전 책의 판면을 복제하는 것이 아니라, 화면 크기·여백·컬럼·행·거터·타이포그래피의 관계를 실험하고 재사용 가능한 레이아웃 설정으로 내보내는 데 목적이 있습니다.
+</div>
 
-## 핵심 기능
+---
 
-- Figma 레이아웃 가이드에 익숙한 방식으로 columns, rows, margins, gutters를 px 단위로 조절합니다.
-- 기본 20분할과 32분할 모드를 제공하며, 20분할을 기본값으로 사용합니다.
-- 활성 프레임 안에서 실제 사용 가능한 폭·높이와 입력값을 바탕으로 셀, 행, 컬럼, 분할 수를 계산해 표시합니다.
-- 화면 미리보기에는 그리드 색상·불투명도, 텍스트 색상·불투명도, Inter 기본 서체, 글자 크기·자간·행간 조절을 제공합니다.
-- 글자 크기는 **pt 전용**으로 입력합니다. 기본 12pt이며 px 선택지는 없습니다. 행간·자간·그리드 치수는 기존 px 단위를 유지합니다. 기존 설정과의 호환성을 위해 내부 계산과 JSON·SVG·HTML/CSS는 동등한 CSS px 크기를 사용합니다(12pt = 16px).
-- 제공받은 독일어 발췌문을 반복해 문단을 구성하고, 그리드의 모듈과 베이스라인에 맞춘 배치를 미리 봅니다.
-- Figma의 실제 Frame preset에서 확인한 Phone, Tablet, Desktop 규격을 제공하고, 기본 프레임은 Desktop 1440×1024입니다.
-- 12종 서체와 60개 작업판 프리셋을 검색하고 선택할 수 있습니다. ISO B와 JIS B, 국내 국절과 완성 판형을 구분합니다.
-- 상단의 **Random grid → Lock grid → Random typography / Random type + image → Lock composition**으로 그리드와 콘텐츠를 순서대로 탐색합니다. 두 단계는 별도 시드를 사용합니다.
-- 그리드 생성은 컬럼·행·여백·거터만 바꾸고 빈 그리드를 보여 줍니다. 그리드를 잠그면 작업판과 그리드 치수는 고정되고, 콘텐츠를 여러 번 생성해도 바뀌지 않습니다.
-- 타이포 생성은 글자 크기·굵기·자간·행간·문단 채우기와 배치를 함께 탐색합니다. 읽을 수 있는 본문 폭과 최소 세 줄 분량의 공간을 확보하며, 무리한 좁은 조각 대신 여러 모듈을 결합합니다. 직접 입력하는 수치는 이런 랜덤 생성 범위에 제한되지 않습니다.
-- 이미지는 사진이 아닌 **비율 고정 박스**입니다. **1:1, 2:3, 4:5, 5:7, 5:8, 16:9, 3:2, 4:3, 9:16** 중 사용할 비율을 선택할 수 있습니다. 실제 사진을 불러오거나 업로드하지 않습니다.
-- 자유 배치는 제목·본문의 시작 셀과 모듈 결합을 그리드 전체에서 탐색합니다. 제목보다 위에 본문을 두거나 가운데·하단에서 시작할 수 있습니다.
-- 행간을 최소 1px까지 줄여 글리프가 겹치는 실험도 표시·내보내기합니다. 겹침 경고가 나와도 배치를 숨기지 않습니다.
-- UI는 영어가 기본이며 한국어로 전환할 수 있습니다. 지정된 독일어 샘플 원문은 언어 전환과 관계없이 보존됩니다.
+![Grid System — the default 20-module desktop editor with Inter](docs/screenshots/grid-system-desktop.png)
 
-## 사용 흐름
+## What is Grid System?
 
-1. 작업판 프리셋을 고르거나 프레임 크기를 정합니다.
-2. **Random grid**를 눌러 원하는 그리드를 찾거나 컬럼·행·여백·거터를 직접 조절합니다. **Grid seed** 오른쪽 적용 버튼으로 시드를 재현합니다.
-3. **Lock grid**로 그리드를 고정합니다. 기본 20분할이나 직접 만든 그리드도 바로 잠글 수 있습니다.
-4. **Random typography** 또는 **Random type + image**로 콘텐츠를 얹습니다. **Type seed**는 현재 콘텐츠 종류에 적용되며, 그리드에는 영향을 주지 않습니다.
-5. 마음에 들면 **Lock composition**을 누릅니다. 타이포·이미지 비율 입력과 콘텐츠 랜덤 생성이 잠깁니다. 구성만 잠금 해제하면 같은 그리드 위에서 계속 탐색할 수 있고, 그리드를 잠금 해제하면 구성 잠금도 함께 풀립니다.
-6. SVG, HTML/CSS ZIP, 설정 JSON으로 내보냅니다. JSON은 두 시드, 잠금 상태, 이미지 비율 선택까지 보관하며 이전 버전 JSON도 계속 불러올 수 있습니다.
+Grid System is a browser-based layout tool for designers working across screens and paper.
+Choose an artboard, tune its columns, rows, margins, and gutters, and see real text arranged
+on the grid. Start with the default 20-module layout, or generate a grid you like, lock it,
+and explore typography and proportional image boxes without losing that structure.
 
-시드는 랜덤 생성의 출발점입니다. 같은 작업판·그리드·서체·이미지 비율 선택과 시드는 결과를 재현합니다. 생성 후 수치를 직접 수정한 최종 결과를 그대로 보관하려면 설정 JSON을 사용하세요. 텍스트와 이미지 박스의 예약 영역은 겹치지 않으며 박스의 비율은 늘리거나 찌그러뜨리지 않습니다. 짧은 행간에서 텍스트 줄끼리 겹치는 것은 의도적으로 허용합니다. 아주 작은 작업판이나 수동으로 만든 극단적인 그리드에 읽을 수 있는 문단을 배치할 수 없으면 조정 안내를 표시합니다. 큰 작업판의 극단적인 밀도에서는 성능 보호를 위해 전체 텍스트를 최대 10,000행으로 제한합니다.
+Inspired by Josef Müller-Brockmann's approach to order, proportion, and typographic rhythm,
+the project explores how classical grid thinking can support contemporary work rather than
+reproducing pages from his book. The preview uses actual font measurements, separate random
+seeds for grid and composition, and reusable exports: editable SVG, an offline HTML/CSS
+package, and settings JSON.
 
-## 내보내기
+## Screenshots
 
-SVG, HTML/CSS ZIP, 설정 JSON을 내려받습니다. Figma 네이티브 Layout Guide를 만드는 플러그인은 아닙니다.
-
-| 형식 | 적합한 용도 | 유의할 점 |
+| Typography + image boxes | A4 · Libre Baskerville | Export for design and development |
 | --- | --- | --- |
-| SVG | 편집 가능한 텍스트·벡터 이미지 박스·계산된 줄 위치 | 가져오는 앱에 같은 폰트가 없으면 글자 모양과 폭이 달라질 수 있습니다. |
-| HTML/CSS ZIP | 선택한 웹폰트·고지문·이미지 박스를 포함한 오프라인 레이아웃 | 좁은 화면에서는 본문과 비율 고정 박스가 재배치됩니다. |
-| 설정 JSON | 두 시드·잠금·이미지 비율을 포함한 설정 보관 | 시각 결과 자체가 아니라 설정값을 담습니다. |
+| [![A locked desktop grid with a seeded composition](docs/screenshots/grid-system-composition.png)](docs/screenshots/grid-system-composition.png) | [![A4 composition with typography and ratio boxes](docs/screenshots/grid-system-print.png)](docs/screenshots/grid-system-print.png) | [![SVG, HTML/CSS, and JSON export options](docs/screenshots/grid-system-export.png)](docs/screenshots/grid-system-export.png) |
 
-<details>
-<summary>화면 예시 보기</summary>
+Actual application captures in Chrome at **1440 × 1024**. The gray rectangles are image
+placeholders, not photographs. Click a thumbnail to view it at full size.
 
-**A4 · Libre Baskerville · 잠근 그리드 위의 타이포와 이미지 박스**
+## Features
 
-![A4 인쇄용 구성](docs/screenshots/grid-system-print.png)
+- **20 or 32 modules** — start with **4 × 5** by default or switch to **4 × 8**.
+  Custom columns, rows, margins, and horizontal/vertical gutters recalculate the module count and dimensions.
+- **60 artboard presets** — Figma Frame-based phone, tablet, and desktop sizes, including the
+  default **Desktop 1440 × 1024 px**; ISO A, ISO B, JIS B, Korean paper cuts and finished formats,
+  and US Letter, Legal, Tabloid, Ledger, Statement, and Executive.
+- **Two-stage exploration** — generate and lock the grid first, then generate typography
+  or typography + image boxes. Grid and type have separate seeds and locks.
+- **Compositions across the whole grid** — headings and body text can begin in different
+  cells, including the middle or bottom of the page. Random generation considers measured
+  text width and usable paragraph space instead of relying on a few fixed top-aligned templates.
+- **Nine image ratios** — choose a pool from **1:1, 2:3, 4:5, 5:7, 5:8, 16:9, 3:2, 4:3,
+  and 9:16**. Boxes retain their proportions inside reserved grid areas.
+- **12 typefaces** — Inter, Libre Baskerville, EB Garamond, Cormorant, Montserrat, Lato,
+  Oswald, Outfit, Pretendard, Wanted Sans, 열린명조, and 열린고딕. Fonts are self-hosted
+  and loaded on selection; available weights follow each family's actual assets.
+- **Point-based type size** — **pt only**, with a **12 pt** default and a **4.5–90 pt** range
+  in **0.25 pt** steps. Letter spacing and leading remain in px.
+- **Density experiments** — adjust paragraph fill, tracking, and leading. Manual leading
+  can go down to **1 px**: overlapping glyphs remain visible and exportable, with a warning.
+- **Independent color and opacity** — style grid guides and text separately, and switch
+  between grid + content, content only, or grid only.
+- **Three reusable exports** — SVG with editable text and vector boxes; an HTML/CSS ZIP
+  with the selected fonts and notices; and settings JSON with both seeds, locks, and ratio choices.
+- **English and Korean** — English is the default UI language. Settings stay in the current
+  browser; the supplied German sample text is preserved and repeated regardless of UI language.
 
-**디자인에서 개발까지, 세 가지 내보내기**
+## Controls
 
-![SVG, HTML/CSS, JSON 내보내기](docs/screenshots/grid-system-export.png)
+Use the top workflow bar to explore and lock each stage; use the right-hand inspector for precise values.
 
-</details>
+| Input | Result |
+| --- | --- |
+| Artboard preset / width / height | Set the working format before locking the grid |
+| 20 modules / 32 modules | Apply the 4 × 5 or 4 × 8 grid shortcut |
+| Random grid / Apply grid seed | Generate columns, rows, margins, and gutters; show the empty grid |
+| Lock grid | Freeze the artboard and grid geometry, then enable content generation |
+| Random typography | Generate text placement, size, weight, tracking, leading, and fill on the locked grid |
+| Random type + image | Generate typography together with proportional placeholder boxes |
+| Apply type seed | Reproduce the current content mode without changing the grid |
+| Image ratio checkboxes | Choose which of the nine ratios can appear |
+| Lock composition | Freeze typography, text styling, ratios, and content randomization |
+| Inspector fields and sliders | Fine-tune the unlocked stage; direct input is not limited to the random generator's preferred ranges |
+| Grid + content / Content / Grid | Change visible layers in the preview and visual exports |
+| Export / Import settings | Download SVG, HTML/CSS ZIP, or JSON; restore a saved settings JSON |
 
-## 개발 및 배포
+You can lock the default or a manually edited grid without generating one first. Unlocking
+only the composition keeps the grid fixed; unlocking the grid also releases the composition
+lock. Generating a new grid clears its generated content but keeps the current artboard and type settings.
 
-상태: 구현·로컬 검증·비공개 GitHub push·Cloudflare Pages 배포 완료.
+## How the grid becomes a layout
 
-Node.js 22.12 이상을 사용합니다.
+For `C` columns, `R` rows, and an artboard of width `W` and height `H`:
+
+```text
+module count  = C × R
+module width  = (W − left margin − right margin − (C − 1) × horizontal gutter) / C
+module height = (H − top margin − bottom margin − (R − 1) × vertical gutter) / R
+```
+
+| Principle | Implementation |
+| --- | --- |
+| Structure before content | The grid seed controls geometry; the type seed controls composition on that geometry |
+| Measured text | Layout waits for the selected font, then uses its metrics to wrap text and evaluate usable space |
+| Room to read | Random compositions seek readable body widths and space for at least three lines; manual extremes remain available |
+| Proportion without distortion | Image boxes fit their reserved areas at the selected ratio; text and image reservations do not overlap |
+| Reproducible state | Reuse the same seeds and inputs, or save JSON to retain all settings after manual edits |
+| Continuous sample | The supplied German text repeats when more content is needed; changing UI language does not translate it |
+| Safe failure | Invalid geometry keeps the last valid preview and shows guidance; total generated text is capped at 10,000 lines |
+
+Geometry is calculated in CSS px. Print presets retain their physical page size, and print
+dimensions can be entered in mm or px. Type size uses the CSS conversion **1 pt = 4/3 px**
+(**12 pt = 16 px**). Preview zoom changes the view, not the underlying layout.
+
+## Tech stack
+
+- [React 19](https://react.dev/) + [TypeScript 7](https://www.typescriptlang.org/) — editor state and typed layout data.
+- [Vite 8](https://vite.dev/) — local development and static production builds.
+- SVG + browser font measurement — preview, typography placement, and editable vector export.
+- [fflate](https://github.com/101arrowz/fflate) — offline HTML/CSS ZIP packaging in the browser.
+- [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) — layout logic, workflow, and export tests.
+- [Cloudflare Pages](https://developers.cloudflare.com/pages/) — production hosting with Git integration.
+
+Font assets live in [public/fonts](public/fonts), with their source and license notices in
+[public/font-notices](public/font-notices). See [FONTS.md](FONTS.md) for sources and supported weights.
+The supplied sample is preserved in [src/sample.txt](src/sample.txt).
+
+## Project structure
+
+```text
+src/
+├── App.tsx            # Editor state, inspector, preview, import/export
+├── WorkflowBar.tsx    # Grid → composition stages, seeds, and locks
+├── core.ts            # Geometry, seeded generation, text layout
+├── model.ts           # Settings, validation, migration, and persistence
+├── export.ts          # SVG, HTML/CSS ZIP, and settings JSON
+├── fonts.ts           # Typeface catalog, loading, and metrics
+├── presets.ts         # Web and print artboard presets
+├── i18n.ts            # English and Korean UI copy
+├── sample.txt         # Supplied German sample
+└── styles.css         # Editor layout and presentation
+public/
+├── fonts/             # Self-hosted WOFF2 assets
+└── font-notices/      # Preserved third-party font notices
+tests/                 # Playwright browser tests
+scripts/               # Font checks, screenshot capture, Pages helper
+docs/screenshots/      # Real application captures used here
+```
+
+React owns the active settings and last valid preview. Layout generation and exporters consume
+explicit settings; local browser storage and JSON preserve the reproducible editing state.
+
+## Getting started
+
+Use **Node.js 22.12 or newer**. Development and Pages are pinned to **22.15.0** via
+`.node-version` and the deployment environment.
 
 ```bash
+git clone https://github.com/dostevskii/grid-system.git
+cd grid-system
 npm ci
-npm run dev
+npm run dev          # http://127.0.0.1:5173
+npm run build        # typecheck + production output in dist/
+npm run preview      # inspect the production build locally
+npm test             # Vitest
+npm run test:e2e     # Playwright; requires local Google Chrome
 ```
 
-정적 산출물은 `dist/`에 생성합니다.
+Deploy with Cloudflare Pages Git integration:
 
-```bash
-npm run build
-npm run preview
-```
+| Setting | Value |
+| --- | --- |
+| Production branch | `main` |
+| Build command | `npm run build` |
+| Output directory | `dist` |
+| `NODE_VERSION` | `22.15.0` |
+| Production URL | [grid-system.pages.dev](https://grid-system.pages.dev/) |
 
-Cloudflare Pages의 Git integration에서는 `main`을 production branch로 두고, build command에 `npm run build`, build output directory에 `dist`를 지정합니다. Pages 프로젝트와 GitHub repository의 공개성은 별개입니다. 이 저장소는 private이며 앱은 공개합니다. 제공된 샘플 발췌문과 웹폰트는 방문자의 브라우저에 전달되지만, 참고 도서 PDF는 저장소와 배포에 포함하지 않습니다. API 자격 증명은 환경 변수로만 전달합니다.
-
-배포 주소는 https://grid-system.pages.dev/ 입니다. `main` push의 자동 프로덕션 배포는 켜져 있으며, 다른 브랜치의 preview 배포와 PR 댓글은 꺼져 있습니다. Node.js는 `.node-version`과 Pages 환경 변수의 `22.15.0`으로 고정합니다.
-
-PowerShell에서 `CLOUDFLARE_API_TOKEN`과 `CLOUDFLARE_ACCOUNT_ID`가 설정되어 있으면 다음 명령으로 상태 조회 또는 연결된 `main`의 수동 재배포를 할 수 있습니다. 토큰을 명령에 직접 적거나 저장소에 저장하지 마세요. `-Create`는 최초 프로젝트 생성용이며 이미 생성된 프로젝트에는 사용하지 않습니다.
+The existing Pages project deploys automatically on a push to `main`. For its PowerShell
+helper, provide `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` through your environment,
+never as committed values:
 
 ```powershell
-.\scripts\deploy-pages.ps1
-.\scripts\deploy-pages.ps1 -Deploy
+.\scripts\deploy-pages.ps1          # Read project and deployment status
+.\scripts\deploy-pages.ps1 -Deploy  # Redeploy the connected main branch
 ```
 
-## 검증
+The `private: true` field in `package.json` prevents accidental npm publication; it does
+not control this GitHub repository's visibility. Run `node scripts/capture-readme.mjs` to
+recapture these screenshots from the live app, or set `GRID_SYSTEM_BASE_URL` to a local build.
+See [VERIFICATION.md](VERIFICATION.md) for recorded checks and [CHANGELOG.md](CHANGELOG.md)
+for version history.
 
-변경마다 다음 검증을 적용합니다.
+## Design
+
+The project draws on Josef Müller-Brockmann's grid principles: shared alignment, deliberate
+margins, a modular structure, and typographic rhythm. It is an independent interpretation,
+not a reproduction of the book's plates or an affiliated product.
+
+The interface is implemented directly in React and SVG. Figma is an export destination and
+the reference for web frame presets; this repository does not include a separate Figma design file.
+The reference book PDF is not included in the source or deployment.
+[PLAN.md](PLAN.md) records the original product plan, [PRESETS.md](PRESETS.md) documents
+artboard references, and [FONTS.md](FONTS.md) covers the type catalog.
+
+## Known limitations
+
+- This is a generated layout explorer, not a drag-and-drop page editor or a native Figma Layout Guide plugin.
+- Images are ratio boxes only. There is no photo library or image upload.
+- Very small artboards or extreme manual grids may not leave usable paragraph space.
+  Intentionally short leading can overlap text; that is a supported experiment, not an automatic correction.
+- SVG keeps text editable and requires the appropriate fonts in the receiving application.
+  Outlined type, PDF export, CMYK, bleed, and crop marks are not provided; verify physical printing separately.
+- Browser settings are local, not cloud-synced. Use JSON to move or archive a composition.
+- The supplied sample text is not a newly licensed text corpus. Ten typefaces include OFL
+  notices; the two Yeolrin families retain a separate source/usage notice. Third-party text
+  and font rights are not replaced by the project footer.
+
+---
+
+# 한국어
+
+[English로 돌아가기](#what-is-grid-system) · [라이브 데모 열기](https://grid-system.pages.dev/)
+
+## Grid System이란?
+
+Grid System은 웹과 인쇄물을 함께 다루는 디자이너를 위한 브라우저 기반 레이아웃 도구입니다.
+작업판을 고르고 컬럼·행·여백·거터를 조절하면 실제 텍스트가 그리드 위에 배치됩니다.
+기본 20분할에서 시작하거나 마음에 드는 그리드를 생성해 잠근 뒤,
+그 구조를 유지한 채 타이포그래피와 비율 고정 이미지 박스를 탐색할 수 있습니다.
+
+Josef Müller-Brockmann의 질서·비례·타이포그래피 리듬에서 출발해, 책의 판면을 복제하기보다
+고전적인 그리드 사고를 오늘의 작업에 활용하는 방법을 실험합니다. 실제 폰트 측정값으로
+미리보기를 구성하고, 그리드와 콘텐츠에 별도 랜덤 시드를 사용합니다.
+결과는 편집 가능한 SVG, 오프라인 HTML/CSS 패키지, 설정 JSON으로 가져갈 수 있습니다.
+
+## 스크린샷
+
+| 타이포 + 이미지 박스 | A4 · Libre Baskerville | 디자인과 개발을 위한 내보내기 |
+| --- | --- | --- |
+| [![잠근 데스크톱 그리드 위의 시드 기반 구성](docs/screenshots/grid-system-composition.png)](docs/screenshots/grid-system-composition.png) | [![타이포와 비율 박스를 배치한 A4 구성](docs/screenshots/grid-system-print.png)](docs/screenshots/grid-system-print.png) | [![SVG, HTML/CSS, JSON 내보내기](docs/screenshots/grid-system-export.png)](docs/screenshots/grid-system-export.png) |
+
+Chrome **1440 × 1024**에서 직접 촬영한 실제 앱 화면입니다.
+회색 사각형은 사진이 아닌 이미지 자리표시자입니다. 작은 이미지를 클릭하면 원본을 볼 수 있습니다.
+
+## 주요 기능
+
+- **20분할 또는 32분할** — 기본 **4 × 5**에서 시작하거나 **4 × 8**로 전환합니다.
+  컬럼·행·여백·가로/세로 거터를 직접 조절하면 분할 수와 모듈 치수를 다시 계산합니다.
+- **60개 작업판 프리셋** — Figma Frame 기반 Phone·Tablet·Desktop과 기본
+  **Desktop 1440 × 1024 px**, ISO A·ISO B·JIS B, 국내 국절과 완성 판형,
+  미국 Letter·Legal·Tabloid·Ledger·Statement·Executive를 제공합니다.
+- **두 단계 탐색** — 먼저 그리드를 생성하고 잠근 뒤 타이포 또는 타이포 + 이미지 박스를 생성합니다.
+  그리드와 타이포는 각각 별도 시드와 잠금을 사용합니다.
+- **그리드 전체를 쓰는 배치** — 제목과 본문은 서로 다른 셀, 중앙, 하단에서도 시작할 수 있습니다.
+  몇 가지 상단 정렬 템플릿에만 의존하지 않고 실제 글자 폭과 문단 공간을 고려해 생성합니다.
+- **이미지 비율 9종** — **1:1, 2:3, 4:5, 5:7, 5:8, 16:9, 3:2, 4:3, 9:16** 중
+  생성에 사용할 비율을 고릅니다. 박스는 예약된 그리드 영역 안에서 비율을 유지합니다.
+- **서체 12종** — Inter, Libre Baskerville, EB Garamond, Cormorant, Montserrat, Lato,
+  Oswald, Outfit, Pretendard, Wanted Sans, 열린명조, 열린고딕.
+  폰트는 자체 호스팅하고 선택 시 불러오며, 실제 자산이 지원하는 굵기를 제공합니다.
+- **pt 전용 글자 크기** — 기본 **12 pt**, 범위 **4.5–90 pt**, 간격 **0.25 pt**입니다.
+  글자 크기에 px 선택지는 없으며, 자간과 행간은 px를 유지합니다.
+- **밀도 실험** — 문단 채우기·자간·행간을 조절합니다. 수동 행간은 **1 px**까지 내려갈 수 있으며,
+  글리프가 겹쳐도 경고와 함께 화면과 내보내기에 그대로 표현합니다.
+- **독립적인 색상과 불투명도** — 그리드 가이드와 텍스트를 따로 설정하고,
+  그리드 + 콘텐츠 / 콘텐츠만 / 그리드만 보기로 전환합니다.
+- **재사용 가능한 내보내기 3종** — 편집 가능한 텍스트·벡터 박스의 SVG,
+  선택한 폰트와 고지문을 포함한 HTML/CSS ZIP, 두 시드·잠금·비율 선택을 보관하는 설정 JSON.
+- **영어와 한국어** — 기본 UI 언어는 영어입니다. 설정은 현재 브라우저에 보관하고,
+  제공받은 독일어 샘플은 UI 언어와 관계없이 원문을 유지해 반복 사용합니다.
+
+## 조작 방법
+
+상단 작업 막대에서 각 단계를 탐색하고 잠근 뒤, 오른쪽 설정 패널에서 세부 수치를 조절합니다.
+
+| 조작 | 동작 |
+| --- | --- |
+| 작업판 프리셋 / 폭 / 높이 | 그리드를 잠그기 전에 작업 규격 설정 |
+| 20분할 / 32분할 | 4 × 5 또는 4 × 8 그리드 바로 적용 |
+| 랜덤 그리드 / 그리드 시드 적용 | 컬럼·행·여백·거터를 생성하고 빈 그리드 표시 |
+| 그리드 잠금 | 작업판과 그리드 치수를 고정하고 콘텐츠 생성 활성화 |
+| 랜덤 타이포 | 잠근 그리드 위에서 텍스트 위치·크기·굵기·자간·행간·채우기 생성 |
+| 랜덤 타이포 + 이미지 | 타이포와 비율 고정 자리표시자 박스를 함께 생성 |
+| 타이포 시드 적용 | 그리드를 바꾸지 않고 현재 콘텐츠 종류를 재현 |
+| 이미지 비율 체크박스 | 9종 중 생성에 사용할 비율 선택 |
+| 구성 잠금 | 타이포·텍스트 스타일·비율·콘텐츠 랜덤 생성 고정 |
+| 설정 패널의 입력칸과 슬라이더 | 잠금 해제된 단계 정밀 조절. 수동 입력은 랜덤 생성의 권장 범위에 제한되지 않음 |
+| 그리드 + 콘텐츠 / 콘텐츠 / 그리드 | 미리보기와 시각 내보내기의 표시 레이어 변경 |
+| 내보내기 / 설정 가져오기 | SVG·HTML/CSS ZIP·JSON 다운로드 또는 저장한 JSON 복원 |
+
+기본 그리드나 직접 조절한 그리드도 바로 잠글 수 있습니다. 구성만 잠금 해제하면 그리드는 유지되고,
+그리드를 잠금 해제하면 구성 잠금도 함께 풀립니다. 새 그리드를 생성하면 생성된 콘텐츠는 비워지지만
+현재 작업판과 타이포 설정은 유지합니다.
+
+## 그리드가 레이아웃이 되는 방식
+
+컬럼 수 `C`, 행 수 `R`, 작업판 폭 `W`, 높이 `H`를 기준으로 계산합니다.
+
+```text
+분할 수   = C × R
+모듈 폭   = (W − 왼쪽 여백 − 오른쪽 여백 − (C − 1) × 가로 거터) / C
+모듈 높이 = (H − 위쪽 여백 − 아래쪽 여백 − (R − 1) × 세로 거터) / R
+```
+
+| 원칙 | 구현 |
+| --- | --- |
+| 콘텐츠보다 구조 먼저 | 그리드 시드는 치수를, 타이포 시드는 그 구조 위의 구성을 제어 |
+| 실제 텍스트 측정 | 선택한 폰트가 로드된 뒤 측정값으로 줄을 나누고 사용 가능한 공간 평가 |
+| 읽을 공간 확보 | 랜덤 구성은 읽을 수 있는 본문 폭과 최소 세 줄의 공간을 탐색. 수동 극단값은 별도 허용 |
+| 왜곡 없는 비율 | 이미지 박스는 예약 영역 안에서 선택한 비율을 유지. 텍스트와 이미지 예약 영역은 겹치지 않음 |
+| 재현 가능한 상태 | 같은 시드와 입력값을 재사용하거나 JSON으로 수동 변경까지 포함한 설정 보관 |
+| 연속되는 샘플 | 필요한 길이만큼 제공된 독일어 원문을 반복. UI 언어 변경으로 번역하지 않음 |
+| 안전한 오류 처리 | 잘못된 치수에서는 마지막 유효 미리보기와 조정 안내를 표시. 전체 생성 텍스트는 최대 10,000행 |
+
+치수는 내부적으로 CSS px로 계산합니다. 인쇄 프리셋은 실제 용지 크기를 보존하며,
+인쇄용 치수는 mm 또는 px로 입력할 수 있습니다. 글자 크기는 CSS 기준
+**1 pt = 4/3 px**(**12 pt = 16 px**)로 변환합니다.
+미리보기 확대·축소는 화면 배율만 바꾸고 실제 레이아웃 크기는 바꾸지 않습니다.
+
+## 기술 구성
+
+- [React 19](https://react.dev/) + [TypeScript 7](https://www.typescriptlang.org/) — 편집 상태와 타입이 정의된 레이아웃 데이터.
+- [Vite 8](https://vite.dev/) — 로컬 개발과 정적 프로덕션 빌드.
+- SVG + 브라우저 폰트 측정 — 미리보기, 타이포 배치, 편집 가능한 벡터 내보내기.
+- [fflate](https://github.com/101arrowz/fflate) — 브라우저에서 오프라인 HTML/CSS ZIP 생성.
+- [Vitest](https://vitest.dev/) + [Playwright](https://playwright.dev/) — 레이아웃 로직, 작업 흐름, 내보내기 테스트.
+- [Cloudflare Pages](https://developers.cloudflare.com/pages/) — Git integration 기반 프로덕션 호스팅.
+
+폰트 자산은 [public/fonts](public/fonts), 출처와 라이선스 고지는
+[public/font-notices](public/font-notices)에 있습니다. 출처와 지원 굵기는 [FONTS.md](FONTS.md)에,
+제공된 원문은 [src/sample.txt](src/sample.txt)에 보존합니다.
+
+## 프로젝트 구조
+
+```text
+src/
+├── App.tsx            # 편집 상태, 설정 패널, 미리보기, 가져오기/내보내기
+├── WorkflowBar.tsx    # 그리드 → 구성 단계, 시드와 잠금
+├── core.ts            # 치수 계산, 시드 기반 생성, 텍스트 배치
+├── model.ts           # 설정, 검증, 마이그레이션, 저장
+├── export.ts          # SVG, HTML/CSS ZIP, 설정 JSON
+├── fonts.ts           # 서체 목록, 로딩, 측정값
+├── presets.ts         # 웹·인쇄 작업판 프리셋
+├── i18n.ts            # 영어·한국어 UI 문구
+├── sample.txt         # 제공된 독일어 샘플
+└── styles.css         # 편집기 레이아웃과 표현
+public/
+├── fonts/             # 자체 호스팅 WOFF2 자산
+└── font-notices/      # 보존된 서드파티 폰트 고지문
+tests/                 # Playwright 브라우저 테스트
+scripts/               # 폰트 검사, 스크린샷 촬영, Pages 보조 도구
+docs/screenshots/      # 이 문서에 사용한 실제 앱 화면
+```
+
+React가 현재 설정과 마지막 유효 미리보기를 관리합니다. 배치 생성과 내보내기는 명시적인 설정값을
+입력받고, 브라우저 로컬 저장소와 JSON이 재현 가능한 편집 상태를 보관합니다.
+
+## 실행 / 배포
+
+**Node.js 22.12 이상**을 사용합니다. 개발 환경과 Pages는 `.node-version`과 배포 환경 변수로
+**22.15.0**에 고정되어 있습니다.
 
 ```bash
-npm run typecheck
-npm run build
-npm test
-npm run test:e2e
+git clone https://github.com/dostevskii/grid-system.git
+cd grid-system
+npm ci
+npm run dev          # http://127.0.0.1:5173
+npm run build        # 타입 검사 + dist/ 프로덕션 산출물
+npm run preview      # 프로덕션 빌드 로컬 확인
+npm test             # Vitest
+npm run test:e2e     # Playwright; 로컬 Google Chrome 필요
 ```
 
-브라우저 테스트는 로컬 Chrome을 사용합니다. 기존 프리셋·폰트·pt 입력·오프라인 내보내기·언어·행간 겹침 검증에 더해, 단계별 생성, 시드 분리, 잠금과 수동 편집 차단, JSON 복원, 이미지 박스의 비율과 표시 모드를 확인합니다. 실제 결과는 [VERIFICATION.md](VERIFICATION.md)에 기록합니다.
+Cloudflare Pages Git integration 배포 설정:
 
-배포된 앱에 같은 테스트를 실행하려면:
+| 항목 | 값 |
+| --- | --- |
+| 프로덕션 브랜치 | `main` |
+| 빌드 명령 | `npm run build` |
+| 출력 디렉터리 | `dist` |
+| `NODE_VERSION` | `22.15.0` |
+| 프로덕션 주소 | [grid-system.pages.dev](https://grid-system.pages.dev/) |
+
+기존 Pages 프로젝트는 `main` 푸시에 자동 배포됩니다. PowerShell 보조 스크립트를 사용하려면
+`CLOUDFLARE_API_TOKEN`과 `CLOUDFLARE_ACCOUNT_ID`를 환경 변수로 전달하세요.
+실제 값을 저장소에 커밋하지 마세요.
 
 ```powershell
-$env:GRID_SYSTEM_BASE_URL = 'https://grid-system.pages.dev'
-npm run test:e2e
+.\scripts\deploy-pages.ps1          # 프로젝트와 배포 상태 조회
+.\scripts\deploy-pages.ps1 -Deploy  # 연결된 main 브랜치 재배포
 ```
 
-README의 이미지는 실제 앱에서 직접 캡처했습니다. `node scripts/capture-readme.mjs`로 배포된 버전의 같은 화면을 다시 생성할 수 있습니다.
+`package.json`의 `private: true`는 실수로 npm 패키지를 발행하는 것을 방지하는 설정이며,
+GitHub 저장소의 공개 여부와는 별개입니다. `node scripts/capture-readme.mjs`로 라이브 앱의
+스크린샷을 다시 촬영할 수 있고, `GRID_SYSTEM_BASE_URL`을 지정하면 로컬 빌드를 사용합니다.
+실행한 검증은 [VERIFICATION.md](VERIFICATION.md), 버전 기록은 [CHANGELOG.md](CHANGELOG.md)를 참고하세요.
 
-## 글꼴, SVG, 라이선스
+## 디자인
 
-- 기본 작업판 폰트는 Inter입니다. 확장 서체의 출처·지원 굵기·고지 기준은 [FONTS.md](FONTS.md)에 관리합니다.
-- 폰트는 자체 호스팅하고 선택할 때 로드합니다. 10종은 OFL 원문을 포함하며, 열린명조·열린고딕은 사용자가 지정한 저장소의 제작사 확인·웹폰트 배포 안내와 별도 출처 고지를 보존합니다. 열린 서체를 OFL이라고 표기하지 않습니다.
-- SVG의 `<text>`는 편집 가능하지만 대상 환경에 해당 글꼴이 없으면 모양과 개행이 바뀔 수 있습니다. 완전히 고정된 시각 결과가 필요한 인쇄물·공유물은 글꼴 라이선스가 허용하는 범위에서 윤곽선화한 별도 파일 또는 PDF를 검토합니다.
-- 브라우저의 인쇄는 현재 viewport, 로컬 폰트, 프린터 설정, 페이지 나눔에 영향을 받습니다. 인쇄 전용 출력은 별도 print stylesheet와 실제 브라우저 인쇄 미리보기에서 검증해야 하며, 화면 미리보기와 완전히 동일하다고 가정하지 않습니다.
+Josef Müller-Brockmann의 그리드 원칙인 공통 정렬, 의도적인 여백, 모듈 구조,
+타이포그래피 리듬에서 출발했습니다. 책의 판면을 복제하거나 저자 측과 제휴한 제품이 아닌,
+독립적인 현대적 해석입니다.
 
-## 텍스트 출처
+인터페이스는 React와 SVG로 직접 구현했습니다. Figma는 내보내기 결과를 가져갈 도구이자
+웹 프레임 프리셋의 기준이며, 이 저장소에는 별도 Figma 디자인 파일이 포함되어 있지 않습니다.
+참고 도서 PDF도 소스와 배포에 포함하지 않습니다.
+[PLAN.md](PLAN.md)는 초기 제품 계획, [PRESETS.md](PRESETS.md)는 작업판 규격의 근거,
+[FONTS.md](FONTS.md)는 서체 구성과 출처를 기록합니다.
 
-예시 문장은 사용자가 제공한 `internationale_typographie_auszug_de_without_markers.txt`의 내용을 그대로 `src/sample.txt`에 보존하고 순환해 구성합니다. 제공된 발췌 파일의 내용은 앱과 다운로드에 포함되며, 책 전체 PDF는 포함하지 않습니다. 마지막 미완성 구절 `Eine Werb`도 임의로 수정하지 않았습니다. 코드·글꼴·예시 원문의 권리를 하나의 라이선스로 일괄 표시하지 않습니다.
+## 알려진 제한
 
-## 참고
+- 드래그로 자유 편집하는 페이지 편집기나 Figma 네이티브 Layout Guide 플러그인이 아닌, 생성형 레이아웃 탐색 도구입니다.
+- 이미지는 비율 박스만 제공합니다. 사진 라이브러리와 이미지 업로드는 없습니다.
+- 아주 작은 작업판이나 극단적인 수동 그리드에서는 문단 공간이 부족할 수 있습니다.
+  의도적으로 줄인 행간의 텍스트 겹침은 지원하는 실험이며 자동 교정하지 않습니다.
+- SVG 텍스트는 편집 가능하지만 가져오는 앱에 해당 폰트가 필요합니다.
+  글자 윤곽선화·PDF 내보내기·CMYK·도련·재단선은 제공하지 않으며, 실제 인쇄는 별도 확인이 필요합니다.
+- 설정은 브라우저 로컬에 저장되고 클라우드로 동기화하지 않습니다. 이동·보관에는 JSON을 사용하세요.
+- 제공된 샘플 원문에 새로운 이용 허락을 부여한 것은 아닙니다. 10종 서체는 OFL 고지,
+  열린명조·열린고딕은 별도 출처·사용 안내를 보존합니다.
+  서드파티 텍스트와 폰트의 권리는 프로젝트 푸터로 대체하지 않습니다.
 
-- [PLAN.md](PLAN.md): 제품 및 구현 계획
-- [CHANGELOG.md](CHANGELOG.md): 버전별 변경 사항
-- [PRESETS.md](PRESETS.md): 프레임과 그리드 preset 근거
-- [FONTS.md](FONTS.md): 글꼴 추가 및 고지 기준
-- [Cloudflare Pages Create project API](https://developers.cloudflare.com/api/resources/pages/subresources/projects/methods/create/)
+---
+
+<div align="center">
+
+© 2026 FRAMEWORKS · producer@frwks.studio · All rights reserved.
+
+</div>
