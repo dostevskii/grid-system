@@ -9,7 +9,7 @@ Take the result into Figma or your next web project with SVG, HTML/CSS, and JSON
 
 **[▶ Live demo — grid-system.pages.dev](https://grid-system.pages.dev/)**
 
-[English](#what-is-grid-system) · [한국어](#한국어) · v1.2.0
+[English](#what-is-grid-system) · [한국어](#한국어) · [MIT License](LICENSE) · v1.2.0
 
 </div>
 
@@ -214,9 +214,17 @@ artboard references, and [FONTS.md](FONTS.md) covers the type catalog.
 - SVG keeps text editable and requires the appropriate fonts in the receiving application.
   Outlined type, PDF export, CMYK, bleed, and crop marks are not provided; verify physical printing separately.
 - Browser settings are local, not cloud-synced. Use JSON to move or archive a composition.
-- The supplied sample text is not a newly licensed text corpus. Ten typefaces include OFL
-  notices; the two Yeolrin families retain a separate source/usage notice. Third-party text
-  and font rights are not replaced by the project footer.
+
+## License
+
+Grid System's original source code and documentation are licensed under the
+[MIT License](LICENSE). Copyright © 2026 FRAMEWORKS.
+
+Third-party assets are excluded from this MIT grant. The [font files](public/fonts)
+retain their [existing notices](public/font-notices): ten typefaces include OFL notices,
+and the two Yeolrin families have a separate source/usage notice.
+The supplied [German sample text](src/sample.txt) retains its original rights;
+this project does not grant additional permission to reuse that text.
 
 ---
 
@@ -419,14 +427,22 @@ Josef Müller-Brockmann의 그리드 원칙인 공통 정렬, 의도적인 여�
 - SVG 텍스트는 편집 가능하지만 가져오는 앱에 해당 폰트가 필요합니다.
   글자 윤곽선화·PDF 내보내기·CMYK·도련·재단선은 제공하지 않으며, 실제 인쇄는 별도 확인이 필요합니다.
 - 설정은 브라우저 로컬에 저장되고 클라우드로 동기화하지 않습니다. 이동·보관에는 JSON을 사용하세요.
-- 제공된 샘플 원문에 새로운 이용 허락을 부여한 것은 아닙니다. 10종 서체는 OFL 고지,
-  열린명조·열린고딕은 별도 출처·사용 안내를 보존합니다.
-  서드파티 텍스트와 폰트의 권리는 프로젝트 푸터로 대체하지 않습니다.
+
+## 라이선스
+
+Grid System의 자체 소스 코드와 문서는 [MIT 라이선스](LICENSE)로 제공합니다.
+저작권은 © 2026 FRAMEWORKS에 있습니다.
+
+서드파티 자산은 이 MIT 이용 허락의 대상에서 제외됩니다.
+[폰트 파일](public/fonts)은 [기존 고지](public/font-notices)를 유지하며,
+10종 서체는 OFL, 열린명조·열린고딕은 별도 출처·사용 안내를 따릅니다.
+제공된 [독일어 샘플 원문](src/sample.txt)의 기존 권리는 유지되며,
+이 프로젝트가 해당 원문의 재사용에 새로운 이용 허락을 부여하지는 않습니다.
 
 ---
 
 <div align="center">
 
-© 2026 FRAMEWORKS · producer@frwks.studio · All rights reserved.
+© 2026 FRAMEWORKS · producer@frwks.studio · [MIT License](LICENSE)
 
 </div>
